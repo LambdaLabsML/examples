@@ -7,10 +7,12 @@ from yolov5.utils.downloads import attempt_download
 
 
 if __name__ == "__main__":
-    wider_face = download_dataset()
+    (wider_face_train, wider_face_test, wider_face_val) = download_dataset()
 
-    convert_to_yolov5_format(wider_face, dst_dir="./yolov5/data/train")
-    convert_to_yolov5_format(wider_face, dst_dir="./yolov5/data/test")
+    convert_to_yolov5_format(wider_face_train, dst_dir="./yolov5/data/train")
+    convert_to_yolov5_format(wider_face_test, dst_dir="./yolov5/data/test")
+    convert_to_yolov5_format(wider_face_val, dst_dir="./yolov5/data/val")
+
     create_yolov5_dataset_yaml("./yolov5/data/train", "./yolov5/data/test")
 
     sys.path.append('yolov5')
