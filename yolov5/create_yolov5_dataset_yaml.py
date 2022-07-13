@@ -2,7 +2,7 @@ import os
 
 
 def create_yolov5_dataset_yaml(yolo_train_dir: str, yolo_test_dir: str):
-    yaml_file = "./data/wider_face.yaml"
+    yaml_file = "./yolov5/data/wider_face.yaml"
     train_images_dir = os.path.join(yolo_train_dir, "images")
     val_images_dir = os.path.join(yolo_test_dir, "images")
 
