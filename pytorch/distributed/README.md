@@ -95,8 +95,50 @@ python3 -m torch.distributed.launch \
 resnet50/main.py \
 --backend=nccl --use_syn
 ```
+
+Multi-Nodes, Multi-GPUs
+```
+# On the first (master) node
+python3 -m torch.distributed.launch \
+--nproc_per_node=2 --nnodes=2 --node_rank=0 \
+--master_addr="ip-of-master-node" --master_port=1234 \
+resnet50/main.py \
+--backend=nccl --use_syn
+
+# On the second node
+python3 -m torch.distributed.launch \
+--nproc_per_node=2 --nnodes=2 --node_rank=1 \
+--master_addr="ip-of-master-node" --master_port=1234 \
+resnet50/main.py \
+--backend=nccl --use_syn
+```
+
 ### mpirun
 
+Single-Node, Multi-GPUs
+```
+mpirun -np 2 \
+    -x MASTER_ADDR=localhost \
+    -x MASTER_PORT=1234 \
+    -x GPU_PER_NODE=2 \
+    -x PATH \
+    -bind-to none -map-by slot \
+    -mca pml ob1 -mca btl ^openib \
+    python3 resnet50/main_mpirun.py --backend=nccl --use_syn
+```
+
+Multi-Nodes, Multi-GPUs
+```
+mpirun -np 4 \
+    -H xxx.xxx.xxx.xxx:2,xxx.xxx.xxx.xxx:2 \
+    -x MASTER_ADDR=xxx.xxx.xxx.xxx \
+    -x MASTER_PORT=1234 \
+    -x GPU_PER_NODE=2 \
+    -x NCCL_DEBUG=INFO -x PATH \
+    -bind-to none -map-by slot \
+    -mca pml ob1 -mca btl ^openib \
+    python3 resnet50/main_mpirun.py --backend=nccl --use_syn
+```
 
 ## Tacotron2
 
