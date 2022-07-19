@@ -51,6 +51,34 @@ kill $(ps aux | grep "main.py" | grep -v grep | awk '{print $2}')
 
 ### mpirun
 
+Single-Node, Multi-GPUs
+```
+mpirun -np 2 \
+    -x MASTER_ADDR=localhost \
+    -x MASTER_PORT=1234 \
+    -x GPU_PER_NODE=2 \
+    -x PATH \
+    -bind-to none -map-by slot \
+    -mca pml ob1 -mca btl ^openib \
+    python3 message-passing/main_mpirun.py --backend=nccl
+```
+
+Multi-Nodes, Multi-GPUs
+```
+# master node need to have password-less access to worker nodes
+
+# On the master node
+mpirun -np 4 \
+    -H xxx.xxx.xxx.xxx:2,xxx.xxx.xxx.xxx:2 \
+    -x MASTER_ADDR=xxx.xxx.xxx.xxx \
+    -x MASTER_PORT=1234 \
+    -x GPU_PER_NODE=2 \
+    -x PATH \
+    -bind-to none -map-by slot \
+    -mca pml ob1 -mca btl ^openib \
+    python3 message-passing/main_mpirun.py --backend=nccl
+```
+
 ## ResNet50
 
 ### torch.distributed.launch
