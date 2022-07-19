@@ -109,32 +109,33 @@ def main():
         map_location = {"cuda:0": "cuda:{}".format(local_rank)}
         ddp_model.load_state_dict(torch.load(model_filepath, map_location=map_location))
 
-    # Prepare dataset and dataloader
-    transform = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
+    if use_syn:
+        # Synthetic data
+        inputs_syn = torch.rand((batch_size, c, w, h)).to(device)
+        labels_syn = torch.zeros(batch_size, dtype=torch.int64).to(device)
+    else:
+        # Prepare dataset and dataloader
+        transform = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
 
-    # Data should be prefetched
-    # Download should be set to be False, because it is not multiprocess safe
-    train_set = torchvision.datasets.CIFAR10(root="data", train=True, download=False, transform=transform) 
-    test_set = torchvision.datasets.CIFAR10(root="data", train=False, download=False, transform=transform)
+        # Data should be prefetched
+        # Download should be set to be False, because it is not multiprocess safe
+        train_set = torchvision.datasets.CIFAR10(root="data", train=True, download=False, transform=transform) 
+        test_set = torchvision.datasets.CIFAR10(root="data", train=False, download=False, transform=transform)
 
-    # Restricts data loading to a subset of the dataset exclusive to the current process
-    train_sampler = DistributedSampler(dataset=train_set)
+        # Restricts data loading to a subset of the dataset exclusive to the current process
+        train_sampler = DistributedSampler(dataset=train_set)
 
-    train_loader = DataLoader(dataset=train_set, batch_size=batch_size, sampler=train_sampler, num_workers=8)
-    # Test loader does not have to follow distributed sampling strategy
-    test_loader = DataLoader(dataset=test_set, batch_size=128, shuffle=False, num_workers=8)
+        train_loader = DataLoader(dataset=train_set, batch_size=batch_size, sampler=train_sampler, num_workers=8)
+        # Test loader does not have to follow distributed sampling strategy
+        test_loader = DataLoader(dataset=test_set, batch_size=128, shuffle=False, num_workers=8)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(ddp_model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=1e-5)
-
-    # Synthetic data
-    inputs_syn = torch.rand((batch_size, c, w, h)).to(device)
-    labels_syn = torch.zeros(batch_size, dtype=torch.int64).to(device)
 
     # Loop over the dataset multiple times
     times = []
@@ -143,13 +144,14 @@ def main():
         print("Local Rank: {}, Epoch: {}, Training ...".format(local_rank, epoch))
         
         # Save and evaluate model routinely
-        if epoch % 10 == 0:
-            if local_rank == 0:
-                accuracy = evaluate(model=ddp_model, device=device, test_loader=test_loader)
-                torch.save(ddp_model.state_dict(), model_filepath)
-                print("-" * 75)
-                print("Epoch: {}, Accuracy: {}".format(epoch, accuracy))
-                print("-" * 75)
+        if not use_syn:
+            if epoch % 10 == 0:
+                if local_rank == 0:
+                    accuracy = evaluate(model=ddp_model, device=device, test_loader=test_loader)
+                    torch.save(ddp_model.state_dict(), model_filepath)
+                    print("-" * 75)
+                    print("Epoch: {}, Accuracy: {}".format(epoch, accuracy))
+                    print("-" * 75)
 
         ddp_model.train()
 
