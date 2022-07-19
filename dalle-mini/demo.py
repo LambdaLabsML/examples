@@ -77,7 +77,7 @@ if st.session_state.image is not None:
 
 if st.session_state.image is not None:
     if st.checkbox("upscale?"):
-        factor = st.select_slider("Upscale factor", [1, 2, 4])
+        factor = st.select_slider("Upscale factor", [1, 2, 4], value=2)
         with st.spinner("Runing model..."):
             image = upscale(st.session_state.image, upscaler, factor)
 
