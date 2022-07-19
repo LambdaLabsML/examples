@@ -45,7 +45,7 @@ message-passing/main.py \
 The Multi-Node, Multi-GPUs test hangs at the end, not sure why. This is how to kill it (run on all nodes)
 
 ```
-kill $(ps aux | grep "main.py" | grep -v grep | awk '{print $2}')
+kill $(ps aux | grep main.py | grep -v grep | awk '{print $2}')
 ```
 
 
@@ -83,6 +83,18 @@ mpirun -np 4 \
 
 ### torch.distributed.launch
 
+The script is implmeneted by [Lei Mao](https://leimao.github.io/blog/PyTorch-Distributed-Training/)
+
+Single-Node, Multi-GPUs
+```
+mkdir -p saved_models
+
+python3 -m torch.distributed.launch \
+--nproc_per_node=2 --nnodes=1 --node_rank=0 \
+--master_addr=localhost --master_port=1234 \
+resnet50/main.py \
+--backend=nccl --use_syn
+```
 ### mpirun
 
 
@@ -91,3 +103,10 @@ mpirun -np 4 \
 ### torch.distributed.launch
 
 ### mpirun
+
+
+## Notes
+
+`torch.distributed.launch` requires manually ssh into every worker node and run the launch command on each of them. 
+
+`mpirun` can launch the job from a single node, but requires that node has password-less login to all other nodes.
