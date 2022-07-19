@@ -142,10 +142,69 @@ mpirun -np 4 \
 
 ## Tacotron2
 
+Customized script that allows multi-node distributed training for [Tacotron2](https://github.com/NVIDIA/DeepLearningExamples/tree/master/PyTorch/SpeechSynthesis/Tacotron2). Replace the original `train.py` script by the ones in the `tacotron2` folder here.
+
 ### torch.distributed.launch
+
+
+Single-Node, Multi-GPUs
+```
+python -m torch.distributed.launch \
+--nproc_per_node=2 --nnodes=1 --node_rank=0 \
+train.py -m Tacotron2 \
+-o ./output/ -lr 1e-3 --epochs 1 -bs 8 --weight-decay 1e-6 --grad-clip-thresh 1.0 --cudnn-enabled --log-file nvlog.json --anneal-steps 500 1000 1500 --anneal-factor 0.1
+```
+
+Multi-Nodes, Multi-GPUs
+```
+# On the first (master) node
+python3 -m torch.distributed.launch \
+--nproc_per_node=1 --nnodes=2 --node_rank=0 \
+--master_addr="ip-of-master-node" --master_port=1234 \
+train.py -m Tacotron2 -o ./output/ -lr 1e-3 --epochs 1 -bs 128 --weight-decay 1e-6 --grad-clip-thresh 1.0 --cudnn-enabled --log-file nvlog.json --anneal-steps 500 1000 1500 --anneal-factor 0.1
+
+# On the second node
+python3 -m torch.distributed.launch \
+--nproc_per_node=1 --nnodes=2 --node_rank=1 \
+--master_addr="ip-of-master-node" --master_port=1234 \
+train.py -m Tacotron2 -o ./output/ -lr 1e-3 --epochs 1 -bs 128 --weight-decay 1e-6 --grad-clip-thresh 1.0 --cudnn-enabled --log-file nvlog.json --anneal-steps 500 1000 1500 --anneal-factor 0.1
+```
 
 ### mpirun
 
+Single-Node, Multi-GPUs
+```
+mpirun -np 2 \
+    -x MASTER_ADDR=localhost \
+    -x MASTER_PORT=1234 \
+    -x GPU_PER_NODE=2 \
+    -x PATH \
+    -bind-to none -map-by slot \
+    -mca pml ob1 -mca btl ^openib \
+    python train_mpirun.py -m Tacotron2 \
+        -o ./output/ -lr 1e-3 --epochs 1 -bs 8 \
+        --weight-decay 1e-6 --grad-clip-thresh 1.0 \
+        --cudnn-enabled --log-file nvlog.json \
+        --anneal-steps 500 1000 1500 --anneal-factor 0.1
+```
+
+Multi-Nodes, Multi-GPUs (Use RUN:AI to provision the nodes. Log into the head node and run the following command)
+```
+mpirun -np 4 \
+-hostfile /etc/mpi/hostfile \
+-bind-to none -map-by slot \
+-x NCCL_DEBUG=INFO -x LD_LIBRARY_PATH -x PATH \
+-x MASTER_ADDR="ip-of-master-node" \
+-x MASTER_PORT=1234 \
+-x GPU_PER_NODE=2 \
+-mca pml ob1 -mca btl ^openib \
+--allow-run-as-root \
+python train_mpirun.py -m Tacotron2 \
+    -o ./output/ -lr 1e-3 --epochs 1 -bs 8 \
+    --weight-decay 1e-6 --grad-clip-thresh 1.0 \
+    --cudnn-enabled --log-file nvlog.json \
+    --anneal-steps 500 1000 1500 --anneal-factor 0.1
+```
 
 ## Notes
 
