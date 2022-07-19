@@ -20,7 +20,7 @@ Single-Node, Multi-GPUs
 ```
 python3 -m torch.distributed.launch \
 --nproc_per_node=2 --nnodes=1 --node_rank=0 \
---master_addr="104.171.200.61" --master_port=1234 \
+--master_addr=localhost --master_port=1234 \
 message-passing/main.py \
 --backend=nccl
 ```

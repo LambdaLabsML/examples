@@ -20,10 +20,10 @@ def run(rank, backend):
     if rank == 0:
         for rank_recv in range(1, WORLD_SIZE):
             dist.send(tensor=tensor, dst=rank_recv)
-            print('Rank {} sent data  to Rank {}'.format(0, rank_recv))
+            print('Rank {} sent data to Rank {}\n'.format(0, rank_recv))
     else:
         dist.recv(tensor=tensor, src=0)
-        print('Rank {} has received data from rank {}'.format(rank, 0))
+        print('Rank {} has received data from rank {}\n'.format(rank, 0))
 
 
 def init_processes(local_rank, backend):
