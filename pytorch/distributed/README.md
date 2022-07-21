@@ -4,14 +4,14 @@
 # Table of Contents
 1. [Setup the nodes](#setup-the-nodes)
 2. [Launch the application](#launch-the-application)
-    1. [Message Passing](#launch-the-application)
+    1. [Message Passing](#message-passing)
         1. [torch.distributed.launch](#torchdistributedlaunch)
         2. [mpirun](#mpirun)
 
 
 # Setup The Nodes
 
-(Skip this section if you just want to try the [demos](#message-passing))
+(Skip this section if you just want to try the [demos](#launch-the-application))
 
 By definition one needs at least two computers for “multi-node” applications. Let’s just use two for this tutorial but the practice should generalize to more than two nodes. 
 
