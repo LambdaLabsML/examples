@@ -42,12 +42,6 @@ message-passing/main.py \
 --backend=nccl
 ```
 
-The Multi-Node, Multi-GPUs test hangs at the end, not sure why. This is how to kill it (run on all nodes)
-
-```
-kill $(ps aux | grep main.py | grep -v grep | awk '{print $2}')
-```
-
 
 ### mpirun
 
