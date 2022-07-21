@@ -5,9 +5,11 @@
 1. [Setup the nodes](#setup-the-nodes)
 2. [Launch the application](#launch-the-application)
     1. [Message Passing](#launch-the-application)
+        1. [torch.distributed.launch](#torchdistributedlaunch)
+        2. [mpirun](#mpirun)
 
 
-## Setup The Nodes
+# Setup The Nodes
 
 (Skip this section if you just want to try the [demos](#message-passing))
 
@@ -29,7 +31,7 @@ However, if you have a specific project that requires extra code or python libra
 Last but not the least, if your environment is inside of a docker image, you will to first create running containers from the image on each node, and then run the application inside them. Otherwise, you can just run your application from the host OS.
 
 
-## Launch The Application
+# Launch The Application
 
 After you set up the environment on all the nodes, the next step is to actually run the application. There are different ways to “launch” applications in a distributed fashion across multiple nodes, designed different vendors such as HPC veterans (Open MPI), Deep Learning framework leaders (PyTorch), or opensource A.I. communities (Horovod). Your ML code needs to be customized slightly for each method, but they more or less follows the same idea: create multiple processes with efficient message passing between the processes. 
 
@@ -40,11 +42,11 @@ The rest of the tutorial will cover how to use PyTorch’s `distributed.launch` 
 
 As far as setting up the machine goes, we will use two 2xA6000 Lambda Cloud instance (`104.171.200.`62 and `104.171.200.182` ). This will allow us to have 4 workers in total (two on each node). We will show how the examples work from both the host OS, and inside of docker containers (`pytorch:22.06-py3`).
 
-### Message Passing
+## Message Passing
 
 We will start from a very simple example that passes tensor between the workers. Let’s first see how to do this with `torch.distributed.launch`. 
 
-**Source Code (torch.distributed.launch)**
+### torch.distributed.launch
 
 ```jsx
 import os
@@ -140,7 +142,7 @@ This application simply spins up four processes, and let process `0` send a tens
 
 VERY IMPORTANT: `RANK` is used by `dist.init_process_group`, and `LOCAL_RANK` is used by `to(device)`.
 
-**Source Code (mpirun)**
+### mpirun
 
 Only small changes are needed to make the `[main.py](http://main.py)` work for `mpirun`.
 
