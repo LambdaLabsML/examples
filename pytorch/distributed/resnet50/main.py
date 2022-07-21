@@ -14,6 +14,11 @@ import numpy as np
 import time
 import importlib
 
+# Environment variables set by torch.distributed.launch
+LOCAL_RANK = int(os.environ['LOCAL_RANK'])
+WORLD_SIZE = int(os.environ['WORLD_SIZE'])
+WORLD_RANK = int(os.environ['RANK'])
+
 def set_random_seeds(random_seed=0):
 
     torch.manual_seed(random_seed)
@@ -93,20 +98,19 @@ def main():
     set_random_seeds(random_seed=random_seed)
 
     # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
-    torch.distributed.init_process_group(backend=backend)
+    torch.distributed.init_process_group(backend=backend, rank=WORLD_RANK, world_size=WORLD_SIZE)
 
     # Encapsulate the model on the GPU assigned to the current process
     model = getattr(torchvision.models, argv.arch)(pretrained=False)
-    print(model)
 
-    device = torch.device("cuda:{}".format(local_rank))
+    device = torch.device("cuda:{}".format(LOCAL_RANK))
     model = model.to(device)
-    ddp_model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)
+    ddp_model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[LOCAL_RANK], output_device=LOCAL_RANK)
 
     # We only save the model who uses device "cuda:0"
     # To resume, the device for the saved model would also be "cuda:0"
     if resume == True:
-        map_location = {"cuda:0": "cuda:{}".format(local_rank)}
+        map_location = {"cuda:0": "cuda:{}".format(LOCAL_RANK)}
         ddp_model.load_state_dict(torch.load(model_filepath, map_location=map_location))
 
     if use_syn:
@@ -141,12 +145,12 @@ def main():
     times = []
     for epoch in range(num_epochs):
 
-        print("Local Rank: {}, Epoch: {}, Training ...".format(local_rank, epoch))
+        print("Local Rank: {}, Epoch: {}, Training ...".format(LOCAL_RANK, epoch))
         
         # Save and evaluate model routinely
         if not use_syn:
             if epoch % 10 == 0:
-                if local_rank == 0:
+                if LOCAL_RANK == 0:
                     accuracy = evaluate(model=ddp_model, device=device, test_loader=test_loader)
                     torch.save(ddp_model.state_dict(), model_filepath)
                     print("-" * 75)

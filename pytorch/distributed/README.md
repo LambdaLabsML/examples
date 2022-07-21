@@ -7,6 +7,7 @@
     1. [Message Passing](#message-passing)
         1. [torch.distributed.launch](#torchdistributedlaunch)
         2. [mpirun](#mpirun)
+    2. [ResNet50](#resnet50)
 
 
 # Setup The Nodes
@@ -92,7 +93,7 @@ if __name__ == "__main__":
 
 **Launch**
 
-```jsx
+```
 # The application has to be launched from both nodes
 
 # Node 104.171.200.62
@@ -148,7 +149,7 @@ Only small changes are needed to make the `[main.py](http://main.py)` work for `
 
 The first change addresses the difference between how `torch.distributed.launch` and `mpirun` set the environment variables 
 
-```jsx
+```
 LOCAL_RANK = int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
 WORLD_SIZE = int(os.environ['OMPI_COMM_WORLD_SIZE'])
 WORLD_RANK = int(os.environ['OMPI_COMM_WORLD_RANK'])
@@ -158,7 +159,7 @@ Another change is you can remove `--local_rank` since `mpirun` does not use that
 
 That is it! You can launch the same application via the following `mpirun` command from the master node:
 
-```jsx
+```
 # From master node
 mpirun -np 4 \
 -H 104.171.200.62:2,104.171.200.182:2 \
@@ -194,3 +195,44 @@ Some explanation for the `mpirun` options:
 - `-bind-to none`: specifies Open MPI to not bind a training process to a single CPU core (which would hurt performance).
 - `-map-by slot`: allows you to have a mixture of different NUMA configurations because the default behavior is to bind to the socket.
 - `mca pml ob1 -mca btl ^openib`: force the use of TCP for MPI communication. This avoids many multiprocessing issues that Open MPI has with RDMA which typically results in segmentation faults.
+
+
+
+## ResNet50
+
+We use Lei Mao's [distributed training script](https://leimao.github.io/blog/PyTorch-Distributed-Training/) and make it work with both `torch.distributed.launch` and `mpirun`. 
+
+
+__torch.distributed.launch__
+
+```
+mkdir -p saved_models
+
+# Node 104.171.200.62
+python3 -m torch.distributed.launch \
+--nproc_per_node=2 --nnodes=2 --node_rank=0 \
+--master_addr=104.171.200.62 --master_port=1234 \
+resnet50/main.py \
+--backend=nccl --use_syn
+
+# Node 104.171.200.182
+python3 -m torch.distributed.launch \
+--nproc_per_node=2 --nnodes=2 --node_rank=1 \
+--master_addr=104.171.200.62 --master_port=1234 \
+resnet50/main.py \
+--backend=nccl --use_syn
+```
+
+__mpirun__
+
+```
+# From master node
+mpirun -np 4 \
+-H 104.171.200.62:2,104.171.200.182:2 \
+-x MASTER_ADDR=104.171.200.62 \
+-x MASTER_PORT=1234 \
+-x PATH \
+-bind-to none -map-by slot \
+-mca pml ob1 -mca btl ^openib \
+python3 resnet50/main_mpirun.py --backend=nccl --use_syn
+```

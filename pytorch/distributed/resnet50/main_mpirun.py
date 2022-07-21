@@ -12,7 +12,12 @@ import os
 import random
 import numpy as np
 import time
+import importlib
 
+# Environment variables set by mpirun
+LOCAL_RANK = int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
+WORLD_SIZE = int(os.environ['OMPI_COMM_WORLD_SIZE'])
+WORLD_RANK = int(os.environ['OMPI_COMM_WORLD_RANK'])
 
 def set_random_seeds(random_seed=0):
 
@@ -40,9 +45,10 @@ def evaluate(model, device, test_loader):
 
     return accuracy
 
+
 def main():
 
-    num_epochs_default = 5
+    num_epochs_default = 10000
     batch_size_default = 256 # 1024
     learning_rate_default = 0.1
     random_seed_default = 0
@@ -55,6 +61,7 @@ def main():
 
     # Each process runs on 1 GPU device specified by the local_rank argument.
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    # parser.add_argument("--local_rank", type=int, help="Local rank. Necessary for using the torch.distributed.launch utility.")
     parser.add_argument("--num_epochs", type=int, help="Number of training epochs.", default=num_epochs_default)
     parser.add_argument("--batch_size", type=int, help="Training batch size for one process.", default=batch_size_default)
     parser.add_argument("--learning_rate", type=float, help="Learning rate.", default=learning_rate_default)
@@ -67,12 +74,7 @@ def main():
     parser.add_argument("--use_syn", action="store_true", help="Use synthetic data")
     argv = parser.parse_args()
 
-    world_size = int(os.environ['OMPI_COMM_WORLD_SIZE'])
-    world_rank = int(os.environ['OMPI_COMM_WORLD_RANK'])
-
-    gpu_per_node = int(os.environ['GPU_PER_NODE'])
-    local_rank = world_rank % gpu_per_node
-
+    # local_rank = argv.local_rank
     num_epochs = argv.num_epochs
     batch_size = argv.batch_size
     learning_rate = argv.learning_rate
@@ -89,25 +91,26 @@ def main():
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
     '''
+
     model_filepath = os.path.join(model_dir, model_filename)
 
     # We need to use seeds to make sure that the models initialized in different processes are the same
     set_random_seeds(random_seed=random_seed)
 
     # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
-    torch.distributed.init_process_group(backend="nccl", rank=world_rank, world_size=world_size)
+    torch.distributed.init_process_group(backend=backend, rank=WORLD_RANK, world_size=WORLD_SIZE)
 
     # Encapsulate the model on the GPU assigned to the current process
-    model = torchvision.models.resnet50(pretrained=False)
+    model = getattr(torchvision.models, argv.arch)(pretrained=False)
 
-    device = torch.device("cuda:{}".format(local_rank))
+    device = torch.device("cuda:{}".format(LOCAL_RANK))
     model = model.to(device)
-    ddp_model = torch.nn.parallel.DistributedDataParallel(model)
+    ddp_model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[LOCAL_RANK], output_device=LOCAL_RANK)
 
     # We only save the model who uses device "cuda:0"
     # To resume, the device for the saved model would also be "cuda:0"
     if resume == True:
-        map_location = {"cuda:0": "cuda:{}".format(local_rank)}
+        map_location = {"cuda:0": "cuda:{}".format(LOCAL_RANK)}
         ddp_model.load_state_dict(torch.load(model_filepath, map_location=map_location))
 
     if use_syn:
@@ -142,8 +145,20 @@ def main():
     times = []
     for epoch in range(num_epochs):
 
-        print("Local Rank: {}, Epoch: {}, Training ...".format(local_rank, epoch))
+        print("Local Rank: {}, Epoch: {}, Training ...".format(LOCAL_RANK, epoch))
         
+        # Save and evaluate model routinely
+        if not use_syn:
+            if epoch % 10 == 0:
+                if LOCAL_RANK == 0:
+                    accuracy = evaluate(model=ddp_model, device=device, test_loader=test_loader)
+                    torch.save(ddp_model.state_dict(), model_filepath)
+                    print("-" * 75)
+                    print("Epoch: {}, Accuracy: {}".format(epoch, accuracy))
+                    print("-" * 75)
+
+        ddp_model.train()
+
         if use_syn:
             start_epoch = time.time()
             for count in range(num_steps_syn):
@@ -177,6 +192,10 @@ def main():
             if epoch > 0:
                 times.append(elapsed)
                 print('num_steps_per_gpu: {}, avg_step_time: {:.4f}'.format(count, elapsed / count))
+
+    avg_time = sum(times) / (num_epochs - 1)
+
+    print("Average epoch time: {}".format(avg_time))
 
 if __name__ == "__main__":
     

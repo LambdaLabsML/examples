@@ -4,7 +4,7 @@ import argparse
 import torch
 import torch.distributed as dist
 
-# Environment variables set by torch.distributed.launch
+# Environment variables set by mpirun
 LOCAL_RANK = int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
 WORLD_SIZE = int(os.environ['OMPI_COMM_WORLD_SIZE'])
 WORLD_RANK = int(os.environ['OMPI_COMM_WORLD_RANK'])
