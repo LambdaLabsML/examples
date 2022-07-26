@@ -4,7 +4,7 @@ import numpy as np
 from datasets import load_dataset
 
 
-def download_dataset():
+def download_dataset(show_example: bool = False):
     wider_face_train = load_dataset('wider_face', split='train')
     wider_face_val = load_dataset('wider_face', split='validation')
     wider_face_test = load_dataset('wider_face', split='test')
@@ -25,7 +25,7 @@ def download_dataset():
                                  linewidth=1, edgecolor='r', facecolor='none')
         ax.add_patch(rect)
 
-    # Uncomment to see an example of WiderFace, with bboxes drawn
-    # plt.show()
+    if show_example:
+        plt.show()
 
     return wider_face_train, wider_face_val, wider_face_test

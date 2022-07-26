@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 
 from download_dataset import download_dataset
 from convert_to_yolov5_format import convert_to_yolov5_format
@@ -9,9 +10,9 @@ from yolov5.utils.downloads import attempt_download
 if __name__ == "__main__":
     (wider_face_train, wider_face_val, wider_face_test) = download_dataset()
 
-    convert_to_yolov5_format(wider_face_train, dst_dir="./yolov5/data/train")
-    convert_to_yolov5_format(wider_face_val, dst_dir="./yolov5/data/val")
-    convert_to_yolov5_format(wider_face_test, dst_dir="./yolov5/data/test")
+    convert_to_yolov5_format(wider_face_train, dst_dir=Path("./yolov5/data/train"))
+    convert_to_yolov5_format(wider_face_val, dst_dir=Path("./yolov5/data/val"))
+    convert_to_yolov5_format(wider_face_test, dst_dir=Path("./yolov5/data/test"))
 
     create_yolov5_dataset_yaml("data/train", "data/val", "data/val")
 
