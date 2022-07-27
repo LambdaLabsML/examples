@@ -20,7 +20,7 @@ def create_yolov5_dataset_yaml(
 ) -> None:
     """
     yolo_X_dir args should be relative to the yolov5 ultralytics
-    repo root, not relative to main.py
+    repo root, not relative to prepare_dataset.py
     """
     yaml_file = "./yolov5/data/wider_face.yaml"
     train_images_dir = os.path.join(yolo_train_dir, "images")
@@ -101,8 +101,8 @@ def convert_to_yolov5_format(
     dataset: IterableDataset,
     dst_dir: Path,
 ) -> None:
-    (dst_dir / "images").mkdir(parents=True, exist_ok=True)
-    (dst_dir / "labels").mkdir(parents=True, exist_ok=True)
+    (dst_dir / Path("images")).mkdir(parents=True, exist_ok=True)
+    (dst_dir / Path("labels")).mkdir(parents=True, exist_ok=True)
 
     Parallel(n_jobs=32)(delayed(_write_files)(dataset[i], dst_dir, i)
                         for i in tqdm(range(len(dataset))))
