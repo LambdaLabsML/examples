@@ -1,0 +1,18 @@
+# Repo-specific
+yolov5/yolov5
+
+
+# Python
+__pycache__
+.ipynb_checkpoints
+
+# C/C++
+*.c
+*.o
+
+# Vim-related
+*.swp
+*.swo
+
+# Misc.
+*.so
