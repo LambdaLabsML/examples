@@ -7,9 +7,9 @@ In this example we will show how to train a large language model on multiple nod
 To run this tutorial you should be familiar with working at the command line as we will be connecting and issuing instructions to our machines using ssh (Note this example isn't suitable for running from a Jupyter notebook).
 This example will use two instances (nodes) to demonstrate multi-node training, for a real training job you may want to scale up the computational resources.
 
-## TODO On-demand vs. reserved setup differences
+## On-demand vs. reserved machines
 
-TODO (currently on-demand)
+The current example assumes you are using [Lambda on-demand GPU cloud](https://lambdalabs.com/service/gpu-cloud) for ease of testing. However, the internode bandwidth for on-demand machines is not guaranteed and may not be enough to ensure good training throughput. We recommend for real training or benchmarking purposes you use [Lambda GPU Reserved Cloud](https://lambdalabs.com/service/gpu-cloud/reserved) to ensure you have fast inter-node communication bandwidth.
 
 ## Machine creation
 
