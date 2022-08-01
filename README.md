@@ -10,4 +10,5 @@ A repository of deep learning examples.
 
 ## Examples
 
-- [YoloV5](yolov5/)
+- [YoloV5 - object detection example using YoloV5](yolov5/)
+- [GPTNeoX - Large Language Model Multi-Node Distributed Training](gpt-neox-training/)
