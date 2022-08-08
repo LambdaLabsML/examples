@@ -13,13 +13,12 @@ Credentials can be passed using the appropriate environment variables. You can a
 
 ## Setup
 
-First set up an environment:
+First set up an environment, we recommend using a [Lambda GPU cloud](https://lambdalabs.com/service/gpu-cloud) instance for local testing, or for instructions running on a Run:ai cluster see below
 
+Start a Cloud instance then:
 ```
 git clone https://github.com/LambdaLabsML/examples.git
 cd examples/experiment-tracking
-python -m venv .venv --prompt exp-tracking
-source .venv/bin/activate
 pip install -r requirements.txt
 ```
 

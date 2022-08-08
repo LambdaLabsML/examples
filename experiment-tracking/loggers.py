@@ -154,7 +154,7 @@ class MLflowLogger():
     def log_confusion_matrix(self, key, target, pred, label):
         # Not built in confusion matrix, but we can log any plot
         cm = ConfusionMatrixDisplay.from_predictions(y_true=target.numpy(), y_pred=pred.numpy(), display_labels=label)
-        mlflow.log_figure(cm.figure_, artifact_file=key)
+        mlflow.log_figure(cm.figure_, artifact_file=key+".jpg")
 
 log_wrappers = {
     "wandb": WandbLogger,
