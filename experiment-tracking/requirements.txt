@@ -1,0 +1,9 @@
+wandb
+comet_ml
+mlflow
+neptune-client
+python-dotenv
+scikit-learn==1.1.1
+typer
+pyyaml
+runai
