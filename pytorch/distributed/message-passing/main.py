@@ -4,11 +4,19 @@ import argparse
 import torch
 import torch.distributed as dist
 
-# Environment variables set by torch.distributed.launch
-LOCAL_RANK = int(os.environ['LOCAL_RANK'])
-WORLD_SIZE = int(os.environ['WORLD_SIZE'])
-WORLD_RANK = int(os.environ['RANK'])
-
+if 'LOCAL_RANK' in os.environ:
+    # Environment variables set by torch.distributed.launch or torchrun
+    LOCAL_RANK = int(os.environ['LOCAL_RANK'])
+    WORLD_SIZE = int(os.environ['WORLD_SIZE'])
+    WORLD_RANK = int(os.environ['RANK'])
+elif 'OMPI_COMM_WORLD_LOCAL_RANK' in os.environ:
+    # Environment variables set by mpirun
+    LOCAL_RANK = int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
+    WORLD_SIZE = int(os.environ['OMPI_COMM_WORLD_SIZE'])
+    WORLD_RANK = int(os.environ['OMPI_COMM_WORLD_RANK'])
+else:
+    import sys
+    sys.exit("Can't find the evironment variables for local rank")
 
 def run(backend):
     tensor = torch.zeros(1)
