@@ -1,0 +1,30 @@
+_target_: datamodule.sr_datamodule.SRDataModule
+train_dataset:
+  _target_: dataset.sr_dataset.BlindSRDataset
+  _convert_: partial
+  hq_data_dir: ${train_hq_data_dir}
+  sr_scale: ${sr_scale}
+  n_channels: 3
+  degradation_type: ${degradation_type}
+  is_train: true
+  shuffle_prob: 0.1
+  use_sharp: False
+  hq_patch_size: 256
+  lq_patch_size: 64
+val_dataset:
+  _target_: dataset.sr_dataset.BlindSRDataset
+  _convert_: partial
+  hq_data_dir: ${val_data_dir}
+  sr_scale: ${sr_scale}
+  n_channels: 3
+  degradation_type: ${degradation_type}
+  is_train: false
+  shuffle_prob: 0.1
+  use_sharp: False
+  hq_patch_size: 256
+  lq_patch_size: 64
+batch_size: ${batch_size}
+num_workers: ${num_workers}
+num_val_workers: 8
+iterations_per_epoch: 1000
+use_random_sampler: False

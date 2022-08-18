@@ -1,0 +1,9 @@
+hydra-core==1.2.0
+opencv-python
+pytorch-lightning==1.7.0
+rich==12.5.1
+scipy==1.9.0
+timm==0.6.7
+torch==1.12.1 --extra-index-url https://download.pytorch.org/whl/cu116
+torchinfo==1.7.0
+torchvision==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu116

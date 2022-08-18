@@ -1,0 +1,3 @@
+_target_: arch.gcir.gcir_nano
+pretrained: False
+version: 1

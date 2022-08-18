@@ -1,0 +1,48 @@
+# @package _global_
+
+model: gcir_base
+name: gcir_base
+version: v1_SRscale2
+sr_scale: 2
+gpus: [0]
+
+train_hq_data_dir: /home/cll/datasets/swinir_train
+val_data_dir: /home/cll/datasets/swinir_test
+
+epochs: 300
+warmup_epochs: 20
+cooldown_epochs: 10
+batch_size: 8
+num_workers: 8
+
+# Optimizer
+optimizer_name: adamw
+lr: 1e-4
+betas: [0.9, 0.999]
+eps: 1e-8
+weight_decay: 5e-2
+
+# LR
+milestones: [50000, 100000, 150000, 200000, 300000]
+gamma: 0.5
+# lr_cycle_decay: 1.0
+# lr_cycle_limit: 1
+# lr_cycle_mul: 1.0
+# min_lr: 5e-6
+# warmup_lr: 1e-6
+# amp: True
+# sched: cosine
+
+# model_ema: true
+# model_ema_decay: 0.9998
+# model_ema_force_cpu: false
+
+# Augmentations
+# crop_pct: 0.875
+# cutmix: 1.0
+# clip_grad: 5.0
+# clip_mode: norm
+# color_jitter: 0.4
+
+# Real SR Augmentations
+degradation_type: 'bsrgan'  # one of 'bsrgan', 'bsrgan_plus', or 'real_esrgan'

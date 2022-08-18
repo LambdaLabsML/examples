@@ -1,0 +1,15 @@
+_target_: lmodule.sr_lmodule.SRLightningModule
+params:
+  lpips_net: alex
+  l1_weight: 1
+  p_weight: 1
+
+  # optimizer hparams
+  lr: ${lr}
+  betas: ${betas}
+  eps: ${eps}
+  weight_decay: ${weight_decay}
+
+  # LR hyperparams
+  milestones: ${milestones}
+  gamma: ${gamma}

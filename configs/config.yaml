@@ -1,0 +1,13 @@
+defaults:
+  - arch: gcir_base
+  - callbacks: default
+  - lmodule: sr_lmodule
+  - datamodule: sr_datamodule
+  - trainer: lightning_default
+  - experiment: gcir/gcir_base
+  - _self_
+
+name: ???
+version: ???
+checkpoint_path: null
+use_channels_last: False
