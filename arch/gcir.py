@@ -159,11 +159,16 @@ class GlobalContextIR(nn.Module):
         return {'rpb'}
 
     def forward_features(self, x):
+        print("INITIAL x shape: ", x.shape)
         x = self.patch_embed(x)
+        print("AFTER PATCH EMBED: ", x.shape)
         x = self.pos_drop(x)
+        print("AFTER pos drop: ", x.shape)
 
         for level in self.levels:
             x = level(x)
+            print("AFTER level: ", x.shape)
+        print("AFTER levels: ", x.shape)
 
         x = self.norm(x)
         x = _to_channel_first(x)
@@ -173,6 +178,7 @@ class GlobalContextIR(nn.Module):
 
     def forward(self, x):
         x = self.forward_features(x)
+        print("AFTER forward features: ", x.shape)
         x = self.head(x)
         return x
 
@@ -183,6 +189,7 @@ def gcir_nano(pretrained=False, **kwargs):
         depths=[2, 2, 6, 2],
         num_heads=[2, 4, 8, 16],
         window_size=[7, 7, 14, 7],
+        # window_size=[8, 8, 16, 8],
         feature_dim=64,
         mlp_ratio=3,
         drop_path_rate=0.2,

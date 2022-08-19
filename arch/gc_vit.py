@@ -511,6 +511,9 @@ class GlobalQueryGen(nn.Module):
     def forward(self, x):
         x = self.to_q_global(x)
         B = x.shape[0]
+        print("GlobalQueryGen x.shape: ", x.shape)
+        total = x.shape[1] * x.shape[2] * x.shape[3]
+        print("TOTAL: ", total)
         x = x.reshape(B, 1, self.N, self.num_heads, self.dim_head).permute(0, 1, 3, 2, 4)
         return x
 
@@ -574,6 +577,7 @@ class GCViTLayer(nn.Module):
         self.q_global_gen = GlobalQueryGen(dim, input_resolution, window_size, num_heads)
 
     def forward(self, x):
+        print("INITIAL in GCViTLayer: ", x.shape)
         q_global = self.q_global_gen(_to_channel_first(x))
         for blk in self.blocks:
             x = blk(x, q_global)
