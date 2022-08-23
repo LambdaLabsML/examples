@@ -2,8 +2,10 @@ from typing import List
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from timm.models.layers import trunc_normal_
 from timm.models.registry import register_model
+from torch import Tensor
 
 from arch.gc_vit import GCViTLayer, PatchEmbed
 
@@ -46,6 +48,7 @@ class GlobalContextIR(nn.Module):
         attn_drop_rate=0.,
         norm_layer=nn.LayerNorm,
         layer_scale=None,
+        sr_scale: int = 2,
         **kwargs
     ) -> None:
         """
@@ -68,8 +71,12 @@ class GlobalContextIR(nn.Module):
         """
         super().__init__()
 
+        self.sr_scale = sr_scale
+
         if kwargs['version'] == 1:
             num_features = feature_dim
+
+            self.feature_dim = feature_dim
             self.num_classes = num_classes
             self.patch_embed = PatchEmbed(in_chans=in_chans, dim=feature_dim)
             self.pos_drop = nn.Dropout(p=drop_rate)
@@ -88,12 +95,20 @@ class GlobalContextIR(nn.Module):
                                    norm_layer=norm_layer,
                                    downsample=False,
                                    layer_scale=layer_scale,
-                                   input_resolution=56)
+                                   input_resolution=resolution)
                 self.levels.append(level)
             self.norm = norm_layer(num_features)
             self.avgpool = nn.AdaptiveAvgPool2d(1)
-            self.head = nn.Linear(num_features, num_classes) if num_classes > 0 else nn.Identity()
+            # self.head = nn.Linear(num_features, num_classes) if num_classes > 0 else nn.Identity()
+            self.head = nn.Conv2d(num_features, num_features, kernel_size=3)
             self.apply(self._init_weights)
+
+            self.upsample_dim = 8
+            self._init_upsampler(
+                feature_dim=self.feature_dim,
+                upsample_dim=self.upsample_dim,
+                out_channels=3
+            )
         elif kwargs['version'] == 2:
             self._build_version2(feature_dim, depths, window_size, mlp_ratio,
                                  num_heads, resolution, drop_path_rate, in_chans,
@@ -142,8 +157,54 @@ class GlobalContextIR(nn.Module):
             self.levels.append(level)
         self.norm = norm_layer(num_features)
         self.avgpool = nn.AdaptiveAvgPool2d(1)
-        self.head = nn.Linear(num_features, num_classes) if num_classes > 0 else nn.Identity()
+        # self.head = nn.Linear(num_features, num_classes) if num_classes > 0 else nn.Identity()
+        self.head = nn.Conv2d(num_features, num_features, kernel_size=3)
+
+        self.upsample_dim = 64
+        self._init_upsampler(
+            feature_dim=self.feature_dim,
+            upsample_dim=self.upsample_dim,
+            out_channels=3
+        )
         self.apply(self._init_weights)
+
+    def _init_upsampler(
+        self,
+        feature_dim: int,
+        upsample_dim: int,
+        out_channels: int
+    ) -> None:
+        # if False == '1conv':
+        #     self.conv_after_body = nn.Conv2d(upsample_dim, feature_dim, 3, 1, 1)
+        # elif True == '3conv':
+        # to save parameters and memory
+        self.conv_after_body = nn.Sequential(
+            nn.Conv2d(upsample_dim, feature_dim // 4, 3, 1, 1),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+            nn.Conv2d(feature_dim // 4, feature_dim // 4, 1, 1, 0),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+            nn.Conv2d(feature_dim // 4, upsample_dim, 3, 1, 1)
+        )
+
+        self.conv_before_upsample = nn.Sequential(
+            nn.Conv2d(11, upsample_dim, 3, 1, 1),
+            nn.LeakyReLU(inplace=True)
+        )
+        self.conv_up1 = nn.Conv2d(upsample_dim, upsample_dim, 3, 1, 1)
+        self.conv_up2 = nn.Conv2d(upsample_dim, upsample_dim, 3, 1, 1)
+        self.conv_hr = nn.Conv2d(upsample_dim, upsample_dim, 3, 1, 1)
+        self.conv_last = nn.Conv2d(upsample_dim, out_channels, 3, 1, 1)
+        self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
+
+    def upsample(self, init_x: Tensor, x: Tensor) -> Tensor:
+        x = torch.cat((self.conv_after_body(x), init_x), dim=1)
+        x = self.conv_before_upsample(x)
+        x = self.lrelu(
+            self.conv_up1(F.interpolate(x, scale_factor=2, mode='nearest'))
+        )
+        x = self.lrelu(self.conv_up2(x))
+        x = self.conv_last(self.lrelu(self.conv_hr(x)))
+        return x
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -158,28 +219,46 @@ class GlobalContextIR(nn.Module):
     def no_weight_decay_keywords(self):
         return {'rpb'}
 
-    def forward_features(self, x):
-        print("INITIAL x shape: ", x.shape)
+    def forward_features(self, x: Tensor) -> Tensor:
         x = self.patch_embed(x)
-        print("AFTER PATCH EMBED: ", x.shape)
+        # print("AFTER PATCH EMBED: ", x.shape)
         x = self.pos_drop(x)
-        print("AFTER pos drop: ", x.shape)
+        # print("AFTER pos drop: ", x.shape)
 
         for level in self.levels:
             x = level(x)
-            print("AFTER level: ", x.shape)
-        print("AFTER levels: ", x.shape)
+            # print("AFTER level: ", x.shape)
+        # print("AFTER levels: ", x.shape)
 
         x = self.norm(x)
-        x = _to_channel_first(x)
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
+        # x = _to_channel_first(x)
+        # x = self.avgpool(x)
+        # x = torch.flatten(x, 1)
         return x
 
     def forward(self, x):
+        # print("INITIAL x shape: ", x.shape)
+        B, C, H, W = x.shape
+        init_x = x
+
         x = self.forward_features(x)
-        print("AFTER forward features: ", x.shape)
-        x = self.head(x)
+
+        # print("AFTER forward features: ", x.shape)
+
+        scale_up = self.feature_dim // self.upsample_dim // 2
+
+        # print("SCALE UP for reshape: ", scale_up)
+
+        x = x.reshape(B, self.upsample_dim, H, W)
+        # x = self.head(x)
+
+        # print("AFTER reshape: ", x.shape)
+
+        x = self.upsample(init_x, x)
+
+        # print("AFTER upsample: ", x.shape)
+
+        x = x.reshape(B, C, H * self.sr_scale, W * self.sr_scale)
         return x
 
 
@@ -188,9 +267,9 @@ def gcir_nano(pretrained=False, **kwargs):
     model = GlobalContextIR(
         depths=[2, 2, 6, 2],
         num_heads=[2, 4, 8, 16],
-        window_size=[7, 7, 14, 7],
-        # window_size=[8, 8, 16, 8],
-        feature_dim=64,
+        # window_size=[7, 7, 14, 7],
+        window_size=[8, 8, 8, 8],
+        feature_dim=128,
         mlp_ratio=3,
         drop_path_rate=0.2,
         **kwargs
@@ -248,13 +327,55 @@ def gcir_small(pretrained=False, **kwargs):
         model.load_state_dict(torch.load(pretrained))
     return model
 
+@register_model
+def gcir_swinir_comp(pretrained=False, **kwargs):
+    model = GlobalContextIR(
+        # depths=[3, 4, 19, 5],
+        # num_heads=[4, 8, 16, 32],
+        depths=[6, 6, 6, 6],
+        num_heads=[2, 4, 8, 16],
+        # window_size=[7, 7, 14, 7],
+        window_size=[8, 8, 8, 8],
+        feature_dim=128,
+        mlp_ratio=2,
+        drop_path_rate=0.5,
+        layer_scale=1e-5,
+        **kwargs
+    )
+    if pretrained:
+        model.load_state_dict(torch.load(pretrained))
+    return model
+
+
+@register_model
+def gcir_regular(pretrained=False, **kwargs):
+    model = GlobalContextIR(
+        # depths=[3, 4, 19, 5],
+        # num_heads=[4, 8, 16, 32],
+        depths=[6, 6, 6, 6, 12, 12],
+        num_heads=[2, 4, 8, 16, 32, 64],
+        # window_size=[7, 7, 14, 7],
+        window_size=[8, 8, 8, 8, 8, 8],
+        feature_dim=128,
+        mlp_ratio=2,
+        drop_path_rate=0.5,
+        layer_scale=1e-5,
+        **kwargs
+    )
+    if pretrained:
+        model.load_state_dict(torch.load(pretrained))
+    return model
+
 
 @register_model
 def gcir_base(pretrained=False, **kwargs):
     model = GlobalContextIR(
-        depths=[3, 4, 19, 5],
-        num_heads=[4, 8, 16, 32],
-        window_size=[7, 7, 14, 7],
+        # depths=[3, 4, 19, 5],
+        # num_heads=[4, 8, 16, 32],
+        depths=[6, 6, 12, 12, 18, 18],
+        num_heads=[2, 4, 8, 16, 32, 64],
+        # window_size=[7, 7, 14, 7],
+        window_size=[8, 8, 8, 8, 8, 8],
         feature_dim=128,
         mlp_ratio=2,
         drop_path_rate=0.5,

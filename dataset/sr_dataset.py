@@ -30,11 +30,10 @@ class BlindSRDataset(data.Dataset):
         self.degradation_type = degradation_type
         self.is_train = is_train
         self.hq_patch_size = hq_patch_size if hq_patch_size \
-            else self.lq_patch_size*self.sr_scale
+            else lq_patch_size * sr_scale
         self.lq_patch_size = lq_patch_size
 
         self.hq_img_paths = img_util.get_image_paths(hq_data_dir)
-        # print(len(self.hq_img_paths))
         assert self.hq_img_paths, 'Error: H path is empty.'
 
     def __getitem__(self, index):

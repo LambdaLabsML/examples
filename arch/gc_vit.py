@@ -354,6 +354,8 @@ class WindowAttentionGlobal(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x, q_global):
+        # print("WindowAttention, x.shape:", x.shape)
+        # print("WindowAttention q_global: ", q_global.shape)
         B_, N, C = x.shape
         B = q_global.shape[0]
         kv = self.qkv(x).reshape(B_, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
@@ -441,16 +443,17 @@ class GCViTBlock(nn.Module):
         self.num_windows = int((input_resolution // window_size) * (input_resolution // window_size))
 
     def forward(self, x, q_global):
-            B, H, W, C = x.shape
-            shortcut = x
-            x = self.norm1(x)
-            x_windows = window_partition(x, self.window_size)
-            x_windows = x_windows.view(-1, self.window_size * self.window_size, C)
-            attn_windows = self.attn(x_windows, q_global)
-            x = window_reverse(attn_windows, self.window_size, H, W)
-            x = shortcut + self.drop_path(self.gamma1 * x)
-            x = x + self.drop_path(self.gamma2 * self.mlp(self.norm2(x)))
-            return x
+        B, H, W, C = x.shape
+        # print("GCViT Block start x.shape: ", x.shape)
+        shortcut = x
+        x = self.norm1(x)
+        x_windows = window_partition(x, self.window_size)
+        x_windows = x_windows.view(-1, self.window_size * self.window_size, C)
+        attn_windows = self.attn(x_windows, q_global)
+        x = window_reverse(attn_windows, self.window_size, H, W)
+        x = shortcut + self.drop_path(self.gamma1 * x)
+        x = x + self.drop_path(self.gamma2 * self.mlp(self.norm2(x)))
+        return x
 
 
 class GlobalQueryGen(nn.Module):
@@ -473,6 +476,12 @@ class GlobalQueryGen(nn.Module):
         """
 
         super().__init__()
+        if input_resolution > 56:
+            self.to_q_global = nn.Sequential(
+                FeatExtract(dim, keep_dim=False),
+                FeatExtract(dim, keep_dim=False),
+                FeatExtract(dim, keep_dim=True),
+            )
         if input_resolution == 56:
             self.to_q_global = nn.Sequential(
                 FeatExtract(dim, keep_dim=False),
@@ -506,15 +515,22 @@ class GlobalQueryGen(nn.Module):
         self.resolution = input_resolution
         self.num_heads = num_heads
         self.N = window_size * window_size
+
+        # TODO: is this necessary?
         self.dim_head = dim // self.num_heads
 
     def forward(self, x):
         x = self.to_q_global(x)
         B = x.shape[0]
-        print("GlobalQueryGen x.shape: ", x.shape)
+        # print("GlobalQueryGen x.shape: ", x.shape)
         total = x.shape[1] * x.shape[2] * x.shape[3]
-        print("TOTAL: ", total)
-        x = x.reshape(B, 1, self.N, self.num_heads, self.dim_head).permute(0, 1, 3, 2, 4)
+        # print("TOTAL: ", total)
+        # x = x.reshape(B, 1, self.N, self.num_heads,
+        #               total // self.N // self.num_heads).permute(
+        #                   0, 1, 3, 2, 4)
+        # The above line used to be:
+        x = x.reshape(B, 1, self.N, self.num_heads,
+                      self.dim_head).permute(0, 1, 3, 2, 4)
         return x
 
 
@@ -577,7 +593,7 @@ class GCViTLayer(nn.Module):
         self.q_global_gen = GlobalQueryGen(dim, input_resolution, window_size, num_heads)
 
     def forward(self, x):
-        print("INITIAL in GCViTLayer: ", x.shape)
+        # print("INITIAL in GCViTLayer: ", x.shape)
         q_global = self.q_global_gen(_to_channel_first(x))
         for blk in self.blocks:
             x = blk(x, q_global)
