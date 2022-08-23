@@ -12,8 +12,8 @@ val_data_dir: /home/cll/datasets/swinir_test
 epochs: 300
 warmup_epochs: 20
 cooldown_epochs: 10
-batch_size: 8
-num_workers: 8
+batch_size: 32
+num_workers: 16
 
 # Optimizer
 optimizer_name: adamw
