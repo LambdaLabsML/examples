@@ -14,7 +14,7 @@ def run_hpo(
 ):
     hpo_root = '/workspace/hpo'
     if not os.path.exists(hpo_root):
-        os.path.mkdir(hpo_root)
+        os.mkdir(hpo_root)
     hpo_experiment = '%s_%s' % (os.getenv('JOB_NAME'), os.getenv('JOB_UUID'))
     runai.hpo.init(hpo_root, hpo_experiment)
     strategy = runai.hpo.Strategy.GridSearch
