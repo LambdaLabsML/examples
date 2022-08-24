@@ -49,3 +49,16 @@ runai submit exp-tracking -i nvcr.io/nvidia/pytorch:22.03-py3 -g 0.5 --large-shm
 ```
 
 Then monitor the completion of runs using `runai logs exp-tracking --follow`. After these are complete you should be able to visit the web UI of your tracking tool to see the results.
+
+## Viewing logs
+
+For the various logging services (wandb, neptune, comet) go the the web page of that service and log in with the account you provided, you should then see all the logged runs. For mlflow runs are logged locally, in order to see these you need to start the mlflow ui, by ensuring that you have the mlflow python packaged installed (`pip install mlflow`) and start the ui in the same working directory as you launched the runs (`mlflow ui`).
+
+When using Run:ai you can start a mflow ui service and then use portforwarding to access this locally:
+
+```
+./runai submit mlflowui -i python  --working-dir /workspace -v /mnt/nfs/examples/experiment-tracking/:/workspace -g 0  -- bash -c "pip install mlflow && mlflow ui"
+kubectl port-forward mlflowui-0-0 5000:5000
+```
+
+Then got to `localhost:5000` in your web browser. Here `mlflowui-0-0` is the pod name, if yours is different you can check using `kubectl get pods`.
