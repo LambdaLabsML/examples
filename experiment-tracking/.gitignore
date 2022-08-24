@@ -1,0 +1,8 @@
+.neptune
+cifar10_data
+mlruns
+wandb
+*.pth
+.env
+.venv
+hpo/

@@ -1,5 +1,6 @@
 # Repo-specific
 yolov5/yolov5
+.env
 
 
 # Python
