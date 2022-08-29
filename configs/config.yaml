@@ -1,6 +1,7 @@
 defaults:
   - arch: gcir_base
   - callbacks: default
+  - logger: default
   - lmodule: sr_lmodule
   - datamodule: sr_datamodule
   - trainer: lightning_default

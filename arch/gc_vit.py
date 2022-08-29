@@ -257,7 +257,7 @@ class WindowAttention(nn.Module):
         """
 
         super().__init__()
-        window_size = (window_size,window_size)
+        window_size = (window_size, window_size)
         self.window_size = window_size
         self.num_heads = num_heads
         head_dim = dim // num_heads
@@ -285,12 +285,15 @@ class WindowAttention(nn.Module):
 
     def forward(self, x, q_global):
         B_, N, C = x.shape
-        qkv = self.qkv(x).reshape(B_, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        qkv = self.qkv(x).reshape(B_, N, 3, self.num_heads,
+                                  C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
         q = q * self.scale
         attn = (q @ k.transpose(-2, -1))
-        relative_position_bias = self.relative_position_bias_table[self.relative_position_index.view(-1)].view(
-            self.window_size[0] * self.window_size[1], self.window_size[0] * self.window_size[1], -1)
+        relative_position_bias = self.relative_position_bias_table[
+            self.relative_position_index.view(-1)].view(
+                self.window_size[0] * self.window_size[1],
+                self.window_size[0] * self.window_size[1], -1)
         relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()
         attn = attn + relative_position_bias.unsqueeze(0)
         attn = self.softmax(attn)
@@ -358,14 +361,17 @@ class WindowAttentionGlobal(nn.Module):
         # print("WindowAttention q_global: ", q_global.shape)
         B_, N, C = x.shape
         B = q_global.shape[0]
-        kv = self.qkv(x).reshape(B_, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        kv = self.qkv(x).reshape(B_, N, 2, self.num_heads,
+                                 C // self.num_heads).permute(2, 0, 3, 1, 4)
         k, v = kv[0], kv[1]
         q_global = q_global.repeat(1, B_ // B, 1, 1, 1)
         q = q_global.reshape(B_, self.num_heads, N, C // self.num_heads)
         q = q * self.scale
         attn = (q @ k.transpose(-2, -1))
-        relative_position_bias = self.relative_position_bias_table[self.relative_position_index.view(-1)].view(
-            self.window_size[0] * self.window_size[1], self.window_size[0] * self.window_size[1], -1)
+        relative_position_bias = self.relative_position_bias_table[
+            self.relative_position_index.view(-1)].view(
+                self.window_size[0] * self.window_size[1],
+                self.window_size[0] * self.window_size[1], -1)
         relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()
         attn = attn + relative_position_bias.unsqueeze(0)
         attn = self.softmax(attn)
@@ -383,7 +389,6 @@ class GCViTBlock(nn.Module):
     """
     def __init__(self,
                  dim,
-                 input_resolution,
                  num_heads,
                  window_size=7,
                  mlp_ratio=4.,
@@ -400,7 +405,6 @@ class GCViTBlock(nn.Module):
         """
         Args:
             dim: feature size dimension.
-            input_resolution: input image resolution.
             num_heads: number of attention head.
             window_size: window size.
             mlp_ratio: MLP ratio.
@@ -430,7 +434,8 @@ class GCViTBlock(nn.Module):
 
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
         self.norm2 = norm_layer(dim)
-        self.mlp = Mlp(in_features=dim, hidden_features=int(dim * mlp_ratio), act_layer=act_layer, drop=drop)
+        self.mlp = Mlp(in_features=dim, hidden_features=int(dim * mlp_ratio),
+                       act_layer=act_layer, drop=drop)
         self.layer_scale = False
         if layer_scale is not None and type(layer_scale) in [int, float]:
             self.layer_scale = True
@@ -440,7 +445,8 @@ class GCViTBlock(nn.Module):
             self.gamma1 = 1.0
             self.gamma2 = 1.0
 
-        self.num_windows = int((input_resolution // window_size) * (input_resolution // window_size))
+        # self.num_windows = int((input_resolution // window_size) * \
+        #   (input_resolution // window_size))
 
     def forward(self, x, q_global):
         B, H, W, C = x.shape
@@ -464,7 +470,7 @@ class GlobalQueryGen(nn.Module):
 
     def __init__(self,
                  dim,
-                 input_resolution,
+                 # input_resolution,
                  window_size,
                  num_heads):
         """
@@ -476,43 +482,47 @@ class GlobalQueryGen(nn.Module):
         """
 
         super().__init__()
-        if input_resolution > 56:
-            self.to_q_global = nn.Sequential(
-                FeatExtract(dim, keep_dim=False),
-                FeatExtract(dim, keep_dim=False),
-                FeatExtract(dim, keep_dim=True),
-            )
-        if input_resolution == 56:
-            self.to_q_global = nn.Sequential(
-                FeatExtract(dim, keep_dim=False),
-                FeatExtract(dim, keep_dim=False),
-                FeatExtract(dim, keep_dim=False),
-            )
+        self.to_q_global = nn.Sequential(
+            FeatExtract(dim, keep_dim=False),
+            FeatExtract(dim, keep_dim=False),
+            FeatExtract(dim, keep_dim=True),
+        )
+        # if input_resolution > 56:
+        #     self.to_q_global = nn.Sequential(
+        #         FeatExtract(dim, keep_dim=False),
+        #         FeatExtract(dim, keep_dim=False),
+        #         FeatExtract(dim, keep_dim=True),
+        #     )
+        # if input_resolution == 56:
+        #     self.to_q_global = nn.Sequential(
+        #         FeatExtract(dim, keep_dim=False),
+        #         FeatExtract(dim, keep_dim=False),
+        #         FeatExtract(dim, keep_dim=False),
+        #     )
 
-        elif input_resolution == 28:
-            self.to_q_global = nn.Sequential(
-                FeatExtract(dim, keep_dim=False),
-                FeatExtract(dim, keep_dim=False),
-            )
+        # elif input_resolution == 28:
+        #     self.to_q_global = nn.Sequential(
+        #         FeatExtract(dim, keep_dim=False),
+        #         FeatExtract(dim, keep_dim=False),
+        #     )
 
-        elif input_resolution == 14:
+        # elif input_resolution == 14:
 
-            if window_size == 14:
-                self.to_q_global = nn.Sequential(
-                    FeatExtract(dim, keep_dim=True)
-                )
+        #     if window_size == 14:
+        #         self.to_q_global = nn.Sequential(
+        #             FeatExtract(dim, keep_dim=True)
+        #         )
 
-            elif window_size == 7:
-                self.to_q_global = nn.Sequential(
-                    FeatExtract(dim, keep_dim=False)
-                )
+        #     elif window_size == 7:
+        #         self.to_q_global = nn.Sequential(
+        #             FeatExtract(dim, keep_dim=False)
+        #         )
 
-        elif input_resolution == 7:
-            self.to_q_global = nn.Sequential(
-                FeatExtract(dim, keep_dim=True)
-            )
+        # elif input_resolution == 7:
+        #     self.to_q_global = nn.Sequential(
+        #         FeatExtract(dim, keep_dim=True)
+        #     )
 
-        self.resolution = input_resolution
         self.num_heads = num_heads
         self.N = window_size * window_size
 
@@ -523,8 +533,10 @@ class GlobalQueryGen(nn.Module):
         x = self.to_q_global(x)
         B = x.shape[0]
         # print("GlobalQueryGen x.shape: ", x.shape)
-        total = x.shape[1] * x.shape[2] * x.shape[3]
+
+        # total = x.shape[1] * x.shape[2] * x.shape[3]
         # print("TOTAL: ", total)
+
         # x = x.reshape(B, 1, self.N, self.num_heads,
         #               total // self.N // self.num_heads).permute(
         #                   0, 1, 3, 2, 4)
@@ -543,7 +555,6 @@ class GCViTLayer(nn.Module):
     def __init__(self,
                  dim,
                  depth,
-                 input_resolution,
                  num_heads,
                  window_size,
                  downsample=True,
@@ -559,7 +570,6 @@ class GCViTLayer(nn.Module):
         Args:
             dim: feature size dimension.
             depth: number of layers in each stage.
-            input_resolution: input image resolution.
             window_size: window size in each stage.
             downsample: bool argument for down-sampling.
             mlp_ratio: MLP ratio.
@@ -586,11 +596,10 @@ class GCViTLayer(nn.Module):
                        attn_drop=attn_drop,
                        drop_path=drop_path[i] if isinstance(drop_path, list) else drop_path,
                        norm_layer=norm_layer,
-                       layer_scale=layer_scale,
-                       input_resolution=input_resolution)
+                       layer_scale=layer_scale)
             for i in range(depth)])
         self.downsample = None if not downsample else ReduceSize(dim=dim, norm_layer=norm_layer)
-        self.q_global_gen = GlobalQueryGen(dim, input_resolution, window_size, num_heads)
+        self.q_global_gen = GlobalQueryGen(dim, window_size, num_heads)
 
     def forward(self, x):
         # print("INITIAL in GCViTLayer: ", x.shape)
@@ -614,7 +623,6 @@ class GCViT(nn.Module):
                  window_size,
                  mlp_ratio,
                  num_heads,
-                 resolution=224,
                  drop_path_rate=0.2,
                  in_chans=3,
                  num_classes=1000,
@@ -632,7 +640,6 @@ class GCViT(nn.Module):
             window_size: window size in each stage.
             mlp_ratio: MLP ratio.
             num_heads: number of heads in each stage.
-            resolution: input image resolution.
             drop_path_rate: drop path rate.
             in_chans: number of input channels.
             num_classes: number of classes.
@@ -663,8 +670,7 @@ class GCViT(nn.Module):
                                drop_path=dpr[sum(depths[:i]):sum(depths[:i + 1])],
                                norm_layer=norm_layer,
                                downsample=(i < len(depths) - 1),
-                               layer_scale=layer_scale,
-                               input_resolution=int(2 ** (-2 - i) * resolution))
+                               layer_scale=layer_scale)
             self.levels.append(level)
         self.norm = norm_layer(num_features)
         self.avgpool = nn.AdaptiveAvgPool2d(1)

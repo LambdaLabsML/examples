@@ -38,7 +38,6 @@ class GlobalContextIR(nn.Module):
         window_size,
         mlp_ratio,
         num_heads,
-        resolution=256,
         drop_path_rate=0.2,
         in_chans=3,
         num_classes=1000,
@@ -58,7 +57,6 @@ class GlobalContextIR(nn.Module):
             window_size: window size in each stage.
             mlp_ratio: MLP ratio.
             num_heads: number of heads in each stage.
-            resolution: input image resolution.
             drop_path_rate: drop path rate.
             in_chans: number of input channels.
             num_classes: number of classes.
@@ -94,8 +92,7 @@ class GlobalContextIR(nn.Module):
                                    drop_path=dpr[sum(depths[:i]):sum(depths[:i + 1])],
                                    norm_layer=norm_layer,
                                    downsample=False,
-                                   layer_scale=layer_scale,
-                                   input_resolution=resolution)
+                                   layer_scale=layer_scale)
                 self.levels.append(level)
             self.norm = norm_layer(num_features)
             self.avgpool = nn.AdaptiveAvgPool2d(1)
@@ -111,7 +108,7 @@ class GlobalContextIR(nn.Module):
             )
         elif kwargs['version'] == 2:
             self._build_version2(feature_dim, depths, window_size, mlp_ratio,
-                                 num_heads, resolution, drop_path_rate, in_chans,
+                                 num_heads, drop_path_rate, in_chans,
                                  num_classes, qkv_bias, qk_scale, drop_rate,
                                  attn_drop_rate, norm_layer, layer_scale, kwargs)
 
@@ -122,7 +119,6 @@ class GlobalContextIR(nn.Module):
         window_size,
         mlp_ratio,
         num_heads,
-        resolution=256,
         drop_path_rate=0.2,
         in_chans=3,
         num_classes=1000,
@@ -152,8 +148,7 @@ class GlobalContextIR(nn.Module):
                                drop_path=dpr[sum(depths[:i]):sum(depths[:i + 1])],
                                norm_layer=norm_layer,
                                downsample=(i < len(depths) - 1),
-                               layer_scale=layer_scale,
-                               input_resolution=int(2 ** (-2 - i) * resolution))
+                               layer_scale=layer_scale)
             self.levels.append(level)
         self.norm = norm_layer(num_features)
         self.avgpool = nn.AdaptiveAvgPool2d(1)
@@ -242,11 +237,9 @@ class GlobalContextIR(nn.Module):
         init_x = x
 
         x = self.forward_features(x)
-
         # print("AFTER forward features: ", x.shape)
 
-        scale_up = self.feature_dim // self.upsample_dim // 2
-
+        # scale_up = self.feature_dim // self.upsample_dim // 2
         # print("SCALE UP for reshape: ", scale_up)
 
         x = x.reshape(B, self.upsample_dim, H, W)
@@ -326,6 +319,7 @@ def gcir_small(pretrained=False, **kwargs):
     if pretrained:
         model.load_state_dict(torch.load(pretrained))
     return model
+
 
 @register_model
 def gcir_swinir_comp(pretrained=False, **kwargs):

@@ -5,8 +5,11 @@ from typing import Any, Dict
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.trainer import Trainer
+from PIL import Image
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
+from pytorch_lightning.loggers.base import LoggerCollection
+from pytorch_lightning.loggers.csv_logs import CSVLogger
+from pytorch_lightning.trainer import Trainer
 from pytorch_lightning.utilities import rank_zero_only
 
 
@@ -125,3 +128,99 @@ class PerformanceBenchmarkCallback(SanityCheckSkipperCallback):
     def on_train_epoch_end(self, trainer: Trainer, pl_module) -> None:
         self._compute_benchmark_metrics(pl_module, stage="train")
         self._reset_benchmark()
+
+
+class LocalImageCallback(SanityCheckSkipperCallback):
+    """Helper for logging images at validation"""
+
+    def __init__(self, format=".jpg"):
+        super().__init__()
+        self.format = format
+
+    def on_fit_start(self, trainer, pl_module):
+        """Ensure log directory is set up correctly"""
+        logger = get_logger(trainer, CSVLogger)
+        experiment = logger.experiment
+        self._set_log_dir(experiment)
+
+    def _set_log_dir(self, experiment):
+        """Get the log directory from rank 0 and broadcast to others"""
+        log_dir = [experiment.log_dir]
+        torch.distributed.broadcast_object_list(log_dir, 0)
+        torch.distributed.barrier()
+        self.log_dir = log_dir[0]
+
+    def on_train_batch_end(self, trainer, pl_module, *args, **kwargs) -> None:
+        """Save training progress snapshots"""
+        snapshot = pl_module.snapshot
+
+        if len(snapshot.images) > 0:
+            for label, row in snapshot.images.items():
+                im = tensor2im(row)
+                im_path = f"{self.log_dir}/{label+self.format}"
+                self.save_im_rank_zero(im, im_path)
+
+    def on_validation_batch_end(self, trainer, pl_module, outputs,
+                                batch, batch_idx, dataloader_idx):
+        """Save merges from the outputs of validation batch"""
+        if not self.ready:
+            return
+
+        # Check what to do depending on the batch contents
+        if not isinstance(outputs, tuple):
+            return
+
+        merged_dir = Path(self.log_dir) / f"{trainer.current_epoch:04}" + \
+            "-{trainer.global_step:08}-merged/"
+        merged_dir.mkdir(parents=True, exist_ok=True)
+        for filename, frame in zip(*outputs):
+            im = tensor2im(frame)
+            filename = f"{filename}{self.format}"
+            im_path = merged_dir / filename
+            im.save(im_path)
+
+    def on_validation_epoch_end(self, trainer: Trainer, pl_module):
+        """Save validation image grids"""
+        if not self.ready:
+            return
+        for k, v in pl_module.val_ims.items():
+            im = tensor2im(v.compute())
+            filename = f"{trainer.current_epoch:04}-{trainer.global_step:08}-{k}{self.format}"
+            im_path = f"{self.log_dir}/{filename}"
+            self.save_im_rank_zero(im, im_path)
+
+    @rank_zero_only
+    def save_im_rank_zero(self, im, im_path):
+        im.save(im_path)
+
+
+def get_logger(trainer: Trainer, logger_class):
+    """Safely get particular logger from Trainer."""
+
+    if isinstance(trainer.logger, logger_class):
+        return trainer.logger
+
+    if isinstance(trainer.logger, LoggerCollection):
+        for logger in trainer.logger:
+            if isinstance(logger, logger_class):
+                return logger
+
+    raise Exception(
+        f"Cannot find a logger of class '{logger_class}'."
+    )
+
+
+def has_callback(trainer: Trainer, callback_class):
+    """Check if a particular callback is in Trainer"""
+    if isinstance(trainer.callbacks, callback_class):
+        return True
+    if isinstance(trainer.callbacks, list):
+        for callback in trainer.callbacks:
+            if isinstance(callback, callback_class):
+                return True
+    return False
+
+
+def tensor2im(grid: torch.Tensor) -> Image.Image:
+    # covert a chw tensor to image
+    return Image.fromarray(np.uint8(grid.permute(1, 2, 0).cpu().numpy()*255))

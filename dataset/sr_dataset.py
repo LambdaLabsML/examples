@@ -14,7 +14,7 @@ class BlindSRDataset(data.Dataset):
         hq_data_dir: str,
         sr_scale: int,
         degradation_type: str,
-        is_train: bool,
+        is_training: bool = True,
         n_channels: int = 3,
         hq_size: int = None,
         shuffle_prob: int = 0.1,
@@ -22,13 +22,12 @@ class BlindSRDataset(data.Dataset):
         hq_patch_size: int = None,
         lq_patch_size: int = 64,
     ):
-        super(BlindSRDataset, self).__init__()
         self.n_channels = n_channels
         self.sr_scale = sr_scale
         self.shuffle_prob = shuffle_prob
         self.use_sharp = use_sharp
         self.degradation_type = degradation_type
-        self.is_train = is_train
+        self.is_training = is_training
         self.hq_patch_size = hq_patch_size if hq_patch_size \
             else lq_patch_size * sr_scale
         self.lq_patch_size = lq_patch_size
@@ -56,7 +55,8 @@ class BlindSRDataset(data.Dataset):
         # ------------------------------------
         # if train, get L/H patch pair
         # ------------------------------------
-        if self.is_train:
+        # print("IS_TRAIN: ", str(self.is_training))
+        if self.is_training:
 
             H, W, C = hq_img.shape
 

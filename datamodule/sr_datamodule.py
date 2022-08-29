@@ -36,15 +36,15 @@ class SRDataModule(pldata.LightningDataModule):
         num_workers: int = 2,
         num_val_workers: int = 2,
         iterations_per_epoch: int = 1000,
-        use_random_sampler: bool = False,
+        use_random_sampler: bool = True,
     ):
         super().__init__()
 
         self.train_dataset = train_dataset
-        if isinstance(val_dataset, Mapping):
-            val_dataset = self._create_val_from_train(val_dataset)
-        elif isinstance(val_dataset, (Path, str)):
-            val_dataset = self._create_val_from_path(val_dataset)
+        # if isinstance(val_dataset, Mapping):
+        #     val_dataset = self._create_val_from_train(val_dataset)
+        # elif isinstance(val_dataset, (Path, str)):
+        #     val_dataset = self._create_val_from_path(val_dataset)
 
         self.val_dataset = val_dataset
 
@@ -59,7 +59,7 @@ class SRDataModule(pldata.LightningDataModule):
         sampler = None
         if self.use_random_sampler:
             sampler = data.RandomSampler(
-                self.dataset,
+                self.train_dataset,
                 replacement=True,
                 num_samples=self.num_samples,
             )

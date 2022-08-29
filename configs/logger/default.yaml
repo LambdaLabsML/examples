@@ -1,0 +1,17 @@
+csv:
+  _target_: pytorch_lightning.loggers.csv_logs.CSVLogger
+  save_dir: "." # This will be the hydra run dir
+  version: "" # Hydra will make the unique directories for us
+  name: logs
+
+wandb:
+  _target_: pytorch_lightning.loggers.wandb.WandbLogger
+  project: ${wandb_project}
+  name: ${name}
+  version: ${version}
+  entity: ${wandb_entity}
+  # save_dir: ${wandb_savedir}
+
+callbacks:
+  local_images:
+    _target_: callbacks.default.LocalImageCallback

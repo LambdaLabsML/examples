@@ -8,6 +8,6 @@ gpus: ${gpus}
 precision: 32
 max_steps: 100000
 # val_check_interval: 10000 # Lightning does not permit check intervals longer than 1 epoch
-check_val_every_n_epoch: 10 # 1 epoch = 1000 iterations
+check_val_every_n_epoch: ${check_val_every_n_epoch}
 replace_sampler_ddp: false
 benchmark: true

@@ -173,7 +173,6 @@ def _build_model(
         model = hydra.utils.instantiate(model)
     if use_channels_last:
         model.to(memory_format=torch.channels_last)
-    print("MODEL INSTANTIATED: ", model)
     return model
 
 
@@ -181,31 +180,24 @@ def _build_losses(cfg: DictConfig) -> torch.nn.Module:
     return None
 
 
-def _add_callbacks(config: DictConfig, callbacks: List):
-    for k, v in config.items():
+def _add_callbacks(callback_config: DictConfig, callbacks: List):
+    for k, v in callback_config.items():
         if v and "_target_" in v:
             callbacks.append(hydra.utils.instantiate(v))
-        elif v:
-            # Call recursively
-            _add_callbacks(v, callbacks)
 
 
-def _build_callbacks(
-    cfg: DictConfig,
-) -> List[Callback]:
+def _build_callbacks(cfg: DictConfig) -> List[Callback]:
     callbacks: List[Callback] = []
     if "callbacks" in cfg:
-        callback_config = cfg.callbacks
-        _add_callbacks(callback_config, callbacks)
+        _add_callbacks(cfg.callbacks, callbacks)
     return callbacks
 
 
-def _build_loggers(
-    cfg: DictConfig
-) -> List[LightningLoggerBase]:
+def _build_loggers(cfg: DictConfig) -> List[LightningLoggerBase]:
     loggers: List[LightningLoggerBase] = []
     if "logger" in cfg:
         for key, lg_conf in cfg.logger.items():
+            # TODO: fix. This if statement is janky
             if key == "callbacks":
                 continue
             if lg_conf and "_target_" in lg_conf:

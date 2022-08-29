@@ -1,5 +1,3 @@
-# logger_callbacks: ${logger.callbacks}
-
 model_checkpoint:
   _target_: callbacks.default.CustomModelCheckpoint
   filename: "{epoch:03d}-{step:07d}"
@@ -9,3 +7,6 @@ model_checkpoint:
   dirpath: checkpoints
   auto_insert_metric_name: false
   verbose: true
+
+wandb:
+  _target_: callbacks.wandb_cb.WandBCallback

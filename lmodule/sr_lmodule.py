@@ -1,12 +1,16 @@
 from typing import Any, Dict
 
 import lpips
+import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr
+from PIL import Image
 from torch.optim import Optimizer
+
+from utils.metrics import ImageGrid
 
 
 class SRLightningModule(pl.LightningModule):
@@ -22,6 +26,7 @@ class SRLightningModule(pl.LightningModule):
         self.G_loss = lambda x, y: torch.sum(
             l1_loss(x, y)*l1_weight + self.perceptual_loss(x, y)*p_weight
         )
+        self.val_ims = None
 
     def set_model(self, model: nn.Module) -> None:
         self.model = model
@@ -52,5 +57,22 @@ class SRLightningModule(pl.LightningModule):
         )
         return [optimizer], [lr_scheduler]
 
-    def check_validation_set(self, batch, batch_index):
-        print("HERE check_validation_set")
+    def validation_step(self, batch, batch_index, dataloader_idx=0):
+        pred = self.model(batch['lq_img'])
+        g_loss = self.G_loss(pred, batch['hq_img'])
+
+        self.val_ims = {name: ImageGrid() for name in (
+            'hq_pred',
+        )}
+        self.val_ims['hq_pred'].update(pred)
+        # Image.fromarray((pred[0]).permute(1, 2, 0).detach().cpu().numpy().astype(np.uint8)).save(
+        #     "/home/cll/Desktop/pred.png")
+
+        self.log_dict({
+            "val/g_loss": g_loss
+        })
+        return g_loss
+
+    def on_validation_end(self):
+        # reset all images metrics
+        [metric.reset() for metric in self.val_ims.values()]

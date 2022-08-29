@@ -1,5 +1,8 @@
 # @package _global_
 
+defaults:
+    - override /callbacks: [default]
+
 model: gcir_base
 name: gcir_base
 version: v1_SRscale2
@@ -10,10 +13,12 @@ train_hq_data_dir: /home/cll/datasets/swinir_train
 val_data_dir: /home/cll/datasets/swinir_test
 
 epochs: 300
-warmup_epochs: 20
-cooldown_epochs: 10
-batch_size: 32
+# warmup_epochs: 20
+# cooldown_epochs: 10
+batch_size: 16
 num_workers: 16
+iterations_per_epoch: 1000
+check_val_every_n_epoch: 1
 
 # Optimizer
 optimizer_name: adamw
@@ -46,3 +51,7 @@ gamma: 0.5
 
 # Real SR Augmentations
 degradation_type: 'bsrgan'  # one of 'bsrgan', 'bsrgan_plus', or 'real_esrgan'
+
+# Loggers
+wandb_project: GCIR
+wandb_entity: cll_lambda
