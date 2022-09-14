@@ -167,6 +167,7 @@ def main():
                     print("-" * 75)
 
         ddp_model.train()
+        train_loader.sampler.set_epoch(epoch)
 
         if use_syn:
             start_epoch = time.time()
