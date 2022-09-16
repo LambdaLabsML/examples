@@ -36,10 +36,7 @@ display(sample["image"].resize((256, 256)))
 print(sample["text"])
 ```
 
-
 ![png](README_files/README_2_0.png)
-
-
 
     a drawing of a green pokemon with red eyes
 
@@ -53,18 +50,19 @@ Stable Diffusion uses yaml based configuration files along with a few extra comm
 
 We've created a base yaml configuration file that you can use to edit for fine tuning. The main part you will need to edit is the data configuration, here's an excerpt from the custom yaml file:
 
-TODO update
+This part of the config basically does the following things it uses the `ldm.data.simple.hf_dataset` function to create a dataset for training from the name `lambdalabs/pokemon-blip-cpations` this is on the Huggingface Hub but could also be a correctly formatted local directory. For validation we don't use a "real" dataset, but just a few text prompts to evaluate how well our model is doing and when to stop training, we want to train enough to get good outputs, but we don't want it to forget all the "general knowledge" from the original model.
 
 ```yaml
 data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 4 # Depends on the available GPU memory
+    batch_size: 4
     num_workers: 4
+    num_val_workers: 0 # Avoid a weird val dataloader issue
     train:
       target: ldm.data.simple.hf_dataset
       params:
-        name: datasets/pokemon
+        name: lambdalabs/pokemon-blip-captions
         image_transforms:
         - target: torchvision.transforms.Resize
           params:
@@ -75,7 +73,7 @@ data:
             size: 512
         - target: torchvision.transforms.RandomHorizontalFlip
     validation:
-      target: ldm.data.simple.TextOnly # Pass arbitrary text samples for evaluation
+      target: ldm.data.simple.TextOnly
       params:
         captions:
         - "A pokemon with green eyes, large wings, and a hat"
@@ -83,6 +81,7 @@ data:
         - "Yoda"
         - "An epic landscape photo of a mountain"
         output_size: 512
+        n_gpus: 2 # small hack to sure we see all our samples
 ```
 
 ## Train!
