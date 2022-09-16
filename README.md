@@ -10,6 +10,7 @@ A repository of deep learning examples.
 
 ## Examples
 
+- [Finetune Stable Diffusion text-to-image model](stable-diffusion-finetuning/)
 - [YoloV5 - object detection example using YoloV5](yolov5/)
 - [GPTNeoX - Large Language Model Multi-Node Distributed Training](gpt-neox-training/)
 - [Experiment Tracking](experiment-tracking/)

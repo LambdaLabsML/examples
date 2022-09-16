@@ -1,10 +1,8 @@
 # Fine Tuning Stable Diffusion
 
-TODO Intro blurb about stable diffusion
+Stable Diffusion is great at many things, but not great at everything, and getting results in a particular style or appearance often involves a lot of work "prompt engineering". If you have a particular type of image you'd like to generate, then an alternative to spending a long time crafting an intricate text prompt is to actually fine tune the image generation model itself.
 
-Stable Diffusion is great at many things, but not great at everything, and getting results in a particular style or appearance often involves a lot of work "prompt engineering" (TODO links). If you have a particular type of image you'd like to generate, then an alternative to spending a long time crafting an intricate text prompt is to actually fine tune the image generation model itself.
-
-Fine tuning is the common practice of taking a model which has been trained on a wide and diverse dataset, and then training it a bit more on the dataset you are specifically interested in. This is common practice on deep learning and has been shown to be tremendously effective all manner of models from standard image classification networks to GANs (TODO links). In this example fine tune Stable Diffusion on a Pokémon dataset to create a text to image model which makes custom Pokémon based on any text prompt.
+Fine tuning is the common practice of taking a model which has been trained on a wide and diverse dataset, and then training it a bit more on the dataset you are specifically interested in. This is common practice on deep learning and has been shown to be tremendously effective all manner of models from standard image classification networks to GANs. In this example we'll show how to fine tune Stable Diffusion on a Pokémon dataset to create a text to image model which makes custom Pokémon based on any text prompt.
 
 TODO examples
 
@@ -24,19 +22,14 @@ We've uploaded our captioned Pokemon dataset to Huggingface to make it easy to r
 ```python
 from datasets import load_dataset
 ds = load_dataset("lambdalabs/pokemon-blip-captions", split="train")
-```
-
-
-```python
 sample = ds[0]
 display(sample["image"].resize((256, 256)))
 print(sample["text"])
 ```
 
 
-    
 ![png](README_files/README_2_0.png)
-    
+
 
 
     a drawing of a green pokemon with red eyes
@@ -87,7 +80,7 @@ data:
 
 Once the config file is set up you're ready to train by running the `main.py` script with a few extra arguments:
 
-- `-t` - Do training 
+- `-t` - Do training
 - `--base configs/stable-diffusion/pokemon.yaml` - Use our custom config
 - `--gpus 0,1` - Use these GPUs
 - `--scale_lr False` - Use the learn rate in the config as is
@@ -97,7 +90,6 @@ Once the config file is set up you're ready to train by running the `main.py` sc
 
 
 ```bash
-%%bash
 python main.py \
     -t \
     --base configs/stable-diffusion/pokemon.yaml \
@@ -105,7 +97,7 @@ python main.py \
     --scale_lr False \
     --num_nodes 1 \
     --check_val_every_n_epoch 10 \
-    --finetune_from models/ldm/stable-diffusion-v1/sd-v1-4-full-ema.ckpt
+    --finetune_from sd-v1-4-full-ema.ckpt
 ```
 
 ## Results
@@ -114,12 +106,11 @@ During training results should be logged to the the `logs` folder, you should se
 
 TODO examples
 
-If we want to use the model we can do so in the normal way, for example using the `txt2img.py` script TODO example, just modifying the checkpoint we pass to be our fine tuned version rather than the original. 
+If we want to use the model we can do so in the normal way, for example using the `txt2img.py` script TODO example, just modifying the checkpoint we pass to be our fine tuned version rather than the original.
 
 
 
 ```bash
-%%bash
 python scripts/txt2img.py \
     --prompt 'robotic cat with wings' \
     --outdir 'outputs/generated_pokemon' \
@@ -138,9 +129,9 @@ print("robotic cat with wings")
 ```
 
 
-    
+
 ![png](README_files/README_7_0.png)
-    
+
 
 
     robotic cat with wings
