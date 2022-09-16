@@ -4,7 +4,16 @@ Stable Diffusion is great at many things, but not great at everything, and getti
 
 Fine tuning is the common practice of taking a model which has been trained on a wide and diverse dataset, and then training it a bit more on the dataset you are specifically interested in. This is common practice on deep learning and has been shown to be tremendously effective all manner of models from standard image classification networks to GANs. In this example we'll show how to fine tune Stable Diffusion on a Pokémon dataset to create a text to image model which makes custom Pokémon based on any text prompt.
 
-TODO examples
+Here are some examples of the sort of outputs the trained model can produce, and the prompt used:
+
+- Girl with a pearl earring
+- Cute Obama creature
+- Donald Trump
+- Boris Johnson
+- Totoro
+- Hello Kitty
+
+![](README_files/montage.jpg)
 
 ## Hardware
 
@@ -107,8 +116,6 @@ During training results should be logged to the the `logs` folder, you should se
 TODO examples
 
 If we want to use the model we can do so in the normal way, for example using the `txt2img.py` script TODO example, just modifying the checkpoint we pass to be our fine tuned version rather than the original.
-
-
 
 ```bash
 python scripts/txt2img.py \
