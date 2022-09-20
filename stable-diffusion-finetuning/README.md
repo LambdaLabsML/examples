@@ -10,13 +10,15 @@ Here are some examples of the sort of outputs the trained model can produce, and
 
 > Girl with a pearl earring, Cute Obama creature, Donald Trump, Boris Johnson, Totoro, Hello Kitty
 
-If you're just after the model, code, or dataset, see`:
+If you're just after the model, code, or dataset, see:
 
 - [Lambda Diffusers](https://github.com/LambdaLabsML/lambda-diffusers)
 - [Captioned Pokémon dataset](https://huggingface.co/datasets/lambdalabs/pokemon-blip-captions)
 - [Model weights in Diffusers format](https://huggingface.co/lambdalabs/sd-pokemon-diffusers)
 - [Original model weights](https://huggingface.co/justinpinkney/pokemon-stable-diffusion)
 - [Training code](https://github.com/justinpinkney/stable-diffusion)
+
+If you just want to generate some Pokémon use [this notebook](https://github.com/LambdaLabsML/lambda-diffusers/blob/main/notebooks/pokemon_demo.ipynb) or try it out on [Replicate](https://replicate.com/lambdal/text-to-pokemon).
 
 ## Hardware
 
