@@ -6,18 +6,21 @@ Fine tuning is the common practice of taking a model which has been trained on a
 
 Here are some examples of the sort of outputs the trained model can produce, and the prompt used:
 
-- Girl with a pearl earring
-- Cute Obama creature
-- Donald Trump
-- Boris Johnson
-- Totoro
-- Hello Kitty
-
 ![](README_files/montage.jpg)
+
+> Girl with a pearl earring, Cute Obama creature, Donald Trump, Boris Johnson, Totoro, Hello Kitty
+
+If you're just after the model, code, or dataset, see`:
+
+- [Lambda Diffusers](https://github.com/LambdaLabsML/lambda-diffusers)
+- [Captioned Pokémon dataset](https://huggingface.co/datasets/lambdalabs/pokemon-blip-captions)
+- [Model weights in Diffusers format](https://huggingface.co/lambdalabs/sd-pokemon-diffusers)
+- [Original model weights](https://huggingface.co/justinpinkney/pokemon-stable-diffusion)
+- [Training code](https://github.com/justinpinkney/stable-diffusion)
 
 ## Hardware
 
-Running Stable Diffusion itself is not too demanding by today's standards, and fine tuning the model doesn't require anything like the hardware on which it was originally trained. For this example I'm using 2xA6000 GPUs on [Lambda GPU Cloud](https://lambdalabs.com/service/gpu-cloud) and run training for around 15,000 steps which takes about 6 hours to run, at a cost of about $10. Training should be able to run on a single or lower spec GPUs, but you might need to adjust batch size and gradient accumulation steps to fit your GPU.
+Running Stable Diffusion itself is not too demanding by today's standards, and fine tuning the model doesn't require anything like the hardware on which it was originally trained. For this example I'm using 2xA6000 GPUs on [Lambda GPU Cloud](https://lambdalabs.com/service/gpu-cloud) and run training for around 15,000 steps which takes about 6 hours to run, at a cost of about $10. Training should be able to run on a single or lower spec GPUs (as long as there is >16GB of VRAM), but you might need to adjust batch size and gradient accumulation steps to fit your GPU. For more details on how to adjust these parameters see the [fine-tuning notebook](pokemon_finetune.ipynb).
 
 ## Data!
 
@@ -48,9 +51,7 @@ Next we need to set up the code and environment for training. We're going to use
 
 Stable Diffusion uses yaml based configuration files along with a few extra command line arguments passed to the `main.py` function in order to launch training.
 
-We've created a base yaml configuration file that you can use to edit for fine tuning. The main part you will need to edit is the data configuration, here's an excerpt from the custom yaml file:
-
-This part of the config basically does the following things it uses the `ldm.data.simple.hf_dataset` function to create a dataset for training from the name `lambdalabs/pokemon-blip-cpations` this is on the Huggingface Hub but could also be a correctly formatted local directory. For validation we don't use a "real" dataset, but just a few text prompts to evaluate how well our model is doing and when to stop training, we want to train enough to get good outputs, but we don't want it to forget all the "general knowledge" from the original model.
+We've created a [base yaml configuration file](https://github.com/justinpinkney/stable-diffusion/blob/main/configs/stable-diffusion/pokemon.yaml) that runs this fine-tuning example. If you want to run on your own dataset it should be simple to modify, the main part you would need to edit is the data configuration, here's the relevant excerpt from the custom yaml file:
 
 ```yaml
 data:
@@ -81,8 +82,10 @@ data:
         - "Yoda"
         - "An epic landscape photo of a mountain"
         output_size: 512
-        n_gpus: 2 # small hack to sure we see all our samples
+        n_gpus: 2 # small hack to make sure we see all our samples
 ```
+
+This part of the config basically does the following things it uses the `ldm.data.simple.hf_dataset` function to create a dataset for training from the name `lambdalabs/pokemon-blip-cpations` this is on the Huggingface Hub but could also be a correctly formatted local directory. For validation we don't use a "real" dataset, but just a few text prompts to evaluate how well our model is doing and when to stop training, we want to train enough to get good outputs, but we don't want it to forget all the "general knowledge" from the original model.
 
 ## Train!
 
@@ -95,7 +98,6 @@ Once the config file is set up you're ready to train by running the `main.py` sc
 - `--num_nodes 1` - Run on a single machine (possibly with multiple GPUs)
 - `--check_val_every_n_epoch 10` - don't check the validation samples too often
 - `--finetune_from models/ldm/stable-diffusion-v1/sd-v1-4-full-ema.ckpt` - Load from the original Stable Diffusion
-
 
 ```bash
 python main.py \
@@ -110,11 +112,11 @@ python main.py \
 
 ## Results
 
-During training results should be logged to the the `logs` folder, you should see samples taken every so often from the training dataset and all the validation samples should be run.
+During training results should be logged to the the `logs` folder, you should see samples taken every so often from the training dataset and all the validation samples should be run. At the start sample looks like normal image, then start to get a Pokemon style, and eventually diverge from the original prompts as training continues:
 
-TODO examples
+![](README_files/training-small.gif)
 
-If we want to use the model we can do so in the normal way, for example using the `txt2img.py` script TODO example, just modifying the checkpoint we pass to be our fine tuned version rather than the original.
+If we want to use the model we can do so in the normal way, for example using the `txt2img.py` script, just modifying the checkpoint we pass to be our fine tuned version rather than the original:
 
 ```bash
 python scripts/txt2img.py \
@@ -126,7 +128,6 @@ python scripts/txt2img.py \
     --ckpt 'logs/2022-09-02T06-46-25_pokemon_pokemon/checkpoints/epoch=000142.ckpt'
 ```
 
-
 ```python
 from PIL import Image
 im = Image.open("outputs/generated_pokemon/grid-0000.png").resize((1024, 256))
@@ -134,21 +135,19 @@ display(im)
 print("robotic cat with wings")
 ```
 
-
-
 ![png](README_files/README_7_0.png)
-
-
 
     robotic cat with wings
 
 
-This model is be compatible with any of the existing repos or user interfaces being developed for Stable Diffusion (TODO eg), and can also be ported to the Huggingface Diffusers library using the following script (TODO)
+This model should compatible with any of the existing repos or user interfaces being developed for Stable Diffusion, and can also be ported to the Huggingface Diffusers library using a [simple script](https://github.com/justinpinkney/stable-diffusion/blob/main/scripts/convert_sd_to_diffusers.py).
+
+If you just want a simple starting point for running this example from start to finish in a notebook take a [look here](pokemon_finetune.ipynb).
 
 ## Plugging in your own data
 
-If you want to use your own data for training then the simplest way is to format it in the right way for huggingface datasets, if your dataset returns `image` and `text` columns then you can re-use the existing config but just change the dataset name to your own. There are also some classes for working with other datasets in the repo TODO link.
+If you want to use your own data for training then the simplest way is to format it in the right way for huggingface datasets, if your dataset returns `image` and `text` columns then you can re-use the existing config but just change the dataset name to your own.
 
 ## Conclusion
 
-Now you know how to train your own Stable Diffusion models on your own datastes. If you train some interesting models please reach out and let us know either in the [Issues](https://github.com/LambdaLabsML/examples/issues) section or on [Twitter](https://twitter.com/LambdaAPI).
+Now you know how to train your own Stable Diffusion models on your own datasets! If you train some interesting models please reach out and let us know either in the [Issues](https://github.com/LambdaLabsML/examples/issues) section or on [Twitter](https://twitter.com/LambdaAPI), or check out some of [our other experiments](https://huggingface.co/lambdalabs/sd-image-variations-diffusers) with Stable Diffusion.
