@@ -1,0 +1,201 @@
+{
+  "task": "001_train_vrt_videosr_bi_reds_6frames",
+  "model": "vrt",
+  "gpu_ids": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "dist": false,
+  "find_unused_parameters": false,
+  "use_static_graph": true,
+  "scale": 4,
+  "n_channels": 3,
+  "path": {
+    "root": "experiments",
+    "pretrained_netG": "/home/cll/dev/KAIR/model_zoo/vrt/",
+    "pretrained_netE": null,
+    "task": "experiments/001_train_vrt_videosr_bi_reds_6frames",
+    "log": "experiments/001_train_vrt_videosr_bi_reds_6frames",
+    "options": "experiments/001_train_vrt_videosr_bi_reds_6frames/options",
+    "models": "experiments/001_train_vrt_videosr_bi_reds_6frames/models",
+    "images": "experiments/001_train_vrt_videosr_bi_reds_6frames/images",
+    "pretrained_optimizerG": null
+  },
+  "datasets": {
+    "train": {
+      "name": "train_dataset",
+      "dataset_type": "VideoRecurrentTrainDataset",
+      "dataroot_gt": "/home/cll/datasets/REDS/val/val_sharp",
+      "dataroot_lq": "/home/cll/datasets/REDS/val/val_sharp_bicubic",
+      "meta_info_file": "",
+      "filename_tmpl": "08d",
+      "filename_ext": "png",
+      "val_partition": "REDS4",
+      "test_mode": false,
+      "io_backend": {
+        "type": "disk"
+      },
+      "num_frame": 6,
+      "gt_size": 256,
+      "interval_list": [
+        1
+      ],
+      "random_reverse": false,
+      "use_hflip": true,
+      "use_rot": true,
+      "dataloader_shuffle": true,
+      "dataloader_num_workers": 32,
+      "dataloader_batch_size": 8,
+      "phase": "train",
+      "scale": 4,
+      "n_channels": 3
+    },
+    "test": {
+      "name": "test_dataset",
+      "dataset_type": "VideoRecurrentTestDataset",
+      "dataroot_gt": "/home/cll/Desktop/REDS4/GT",
+      "dataroot_lq": "/home/cll/Desktop/REDS4/sharp_bicubic",
+      "cache_data": true,
+      "io_backend": {
+        "type": "disk"
+      },
+      "num_frame": -1,
+      "phase": "test",
+      "scale": 4,
+      "n_channels": 3
+    }
+  },
+  "netG": {
+    "net_type": "vrt",
+    "upscale": 4,
+    "img_size": [
+      6,
+      64,
+      64
+    ],
+    "window_size": [
+      6,
+      8,
+      8
+    ],
+    "depths": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "indep_reconsts": [
+      11,
+      12
+    ],
+    "embed_dims": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      180,
+      180,
+      180,
+      180,
+      180,
+      180
+    ],
+    "num_heads": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "spynet_path": "model_zoo/vrt/spynet_sintel_final-3d2a1287.pth",
+    "pa_frames": 2,
+    "deformable_groups": 12,
+    "nonblind_denoising": false,
+    "use_checkpoint_attn": false,
+    "use_checkpoint_ffn": false,
+    "no_checkpoint_attn_blocks": [],
+    "no_checkpoint_ffn_blocks": [],
+    "init_type": "default",
+    "scale": 4
+  },
+  "train": {
+    "G_lossfn_type": "charbonnier",
+    "G_lossfn_weight": 1.0,
+    "G_charbonnier_eps": 1e-09,
+    "E_decay": 0,
+    "G_optimizer_type": "adam",
+    "G_optimizer_lr": 0.0004,
+    "G_optimizer_betas": [
+      0.9,
+      0.99
+    ],
+    "G_optimizer_wd": 0,
+    "G_optimizer_clipgrad": null,
+    "G_optimizer_reuse": true,
+    "fix_iter": 20000,
+    "fix_lr_mul": 0.125,
+    "fix_keys": [
+      "spynet",
+      "deform"
+    ],
+    "total_iter": 300000,
+    "G_scheduler_type": "CosineAnnealingWarmRestarts",
+    "G_scheduler_periods": 300000,
+    "G_scheduler_eta_min": 1e-07,
+    "G_regularizer_orthstep": null,
+    "G_regularizer_clipstep": null,
+    "G_param_strict": true,
+    "E_param_strict": true,
+    "checkpoint_test": 5000,
+    "checkpoint_save": 5000,
+    "checkpoint_print": 200,
+    "F_feature_layer": 34,
+    "F_weights": 1.0,
+    "F_lossfn_type": "l1",
+    "F_use_input_norm": true,
+    "F_use_range_norm": false,
+    "G_scheduler_restart_weights": 1
+  },
+  "val": {
+    "save_img": false,
+    "pad_seq": false,
+    "flip_seq": false,
+    "center_frame_only": false,
+    "num_frame_testing": 40,
+    "num_frame_overlapping": 2,
+    "size_patch_testing": 128
+  },
+  "opt_path": "options/vrt/001_train_vrt_videosr_bi_reds_6frames.json",
+  "is_train": true,
+  "merge_bn": false,
+  "merge_bn_startpoint": -1,
+  "num_gpu": 8,
+  "rank": 0,
+  "world_size": 1
+}

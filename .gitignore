@@ -1,7 +1,9 @@
 # Repo-specific
 yolov5/yolov5
 .env
-
+*outputs
+sr_interactive_tmp
+sr_interactive_tmp_output
 
 # Python
 __pycache__
@@ -17,3 +19,4 @@ __pycache__
 
 # Misc.
 *.so
+*.egg-info
