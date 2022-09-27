@@ -25,15 +25,19 @@ SWIN_IR_WD = "KAIR"
 SWINIR_CKPT_DIR: str = Path("KAIR/model_zoo/")
 MODEL_NAME_TO_PATH: Dict[str, Path] = {
     "LambdaSwinIR_v0.1": Path(str(SWINIR_CKPT_DIR) + "/805000_G.pth"),
+    "SwinIR-L_x4": Path(str(SWINIR_CKPT_DIR) + "/003_realSR_BSRGAN_DFOWMFC_s64w8_SwinIR-L_x4_GAN.pth"),
 }
 SWINIR_NAME_TO_PATCH_SIZE: Dict[str, int] = {
     "LambdaSwinIR_v0.1": 96,
+    "SwinIR-L_x4": 64,
 }
 SWINIR_NAME_TO_SCALE: Dict[str, int] = {
     "LambdaSwinIR_v0.1": 2,
+    "SwinIR-L_x4": 4,
 }
 SWINIR_NAME_TO_LARGE_MODEL: Dict[str, bool] = {
     "LambdaSwinIR_v0.1": False,
+    "SwinIR-L_x4": True,
 }
 
 def _run_swin_ir(
@@ -128,14 +132,23 @@ def _gradio_handler(sr_option: str, input_img: NDArray):
 
 
 gr.close_all()
-SR_OPTIONS = ["LambdaSwinIR_v0.1"]
-examples = [
-    ["LambdaSwinIR_v0.1", "examples/oldphoto6.png"],
-    ["LambdaSwinIR_v0.1", "examples/Lincoln.png"],
-    ["LambdaSwinIR_v0.1", "examples/OST_009.png"],
-    ["LambdaSwinIR_v0.1", "examples/00003.png"],
-    ["LambdaSwinIR_v0.1", "examples/00000067_cropped.png"],
-]
+SR_OPTIONS = ["LambdaSwinIR_v0.1", "SwinIR-L_x4"]
+EXAMPLES_DIR = Path("examples")
+
+examples = []
+for option in SR_OPTIONS:
+    example_files = EXAMPLES_DIR.glob('**/*')
+    for example_file in example_files:
+        examples.append([option, str(Path(example_file))])
+
+# examples = [
+#     ["LambdaSwinIR_v0.1", "examples/oldphoto6.png"],
+#     ["LambdaSwinIR_v0.1", "examples/Lincoln.png"],
+#     ["LambdaSwinIR_v0.1", "examples/00000067_cropped.png"],
+#     ["SwinIR-L_x4", "examples/oldphoto6.png"],
+#     ["SwinIR-L_x4", "examples/Lincoln.png"],
+#     ["SwinIR-L_x4", "examples/00000067_cropped.png"],
+# ]
 ui = gr.Interface(fn=_gradio_handler,
                   inputs=[
                       gr.Radio(SR_OPTIONS),

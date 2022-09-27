@@ -9,6 +9,9 @@ sr_interactive_tmp_output
 __pycache__
 .ipynb_checkpoints
 
+# Pytorch
+*.pth
+
 # C/C++
 *.c
 *.o
