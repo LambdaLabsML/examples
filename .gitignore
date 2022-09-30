@@ -4,6 +4,7 @@ yolov5/yolov5
 *outputs
 sr_interactive_tmp
 sr_interactive_tmp_output
+gradio_cached_examples
 
 # Python
 __pycache__
