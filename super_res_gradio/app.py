@@ -82,16 +82,41 @@ def _run_swin_ir(
     return result
 
 
-def _bilinear_upsample(image: NDArray):
+def _lanczos_upsample(image: NDArray):
     result = cv2.resize(
         image,
         dsize=(image.shape[1] * 2, image.shape[0] * 2),
-        interpolation=cv2.INTER_LANCZOS4
+        interpolation=cv2.INTER_LINEAR
+    )
+    return result
+
+SIZE_LIMIT = 1024
+
+def _downsize_if_necessary(image: NDArray):
+    h, w, c = image.shape
+    new_h = h
+    new_w = w
+    if h > SIZE_LIMIT:
+        new_h = SIZE_LIMIT
+    if w > SIZE_LIMIT:
+        new_w = SIZE_LIMIT
+
+    if h == new_h and w == new_w:
+        return image
+
+    result = cv2.resize(
+        image,
+        dsize=(new_w, new_h),
+        interpolation=cv2.INTER_LINEAR
     )
     return result
 
 
+
 def _decide_sr_algo(model_name: str, image: NDArray):
+    image = _downsize_if_necessary(image)
+    if model_name == "Naive upsample":
+        return _lanczos_upsample(image)
     # if "SwinIR" in model_name:
     #     result = _run_swin_ir(image,
     #                           model_path=MODEL_NAME_TO_PATH[model_name],
@@ -115,47 +140,79 @@ def _decide_sr_algo(model_name: str, image: NDArray):
 
 
 def _super_resolve(model_name: str, input_img):
-    # futures = []
-    # with ThreadPoolExecutor(max_workers=4) as executor:
-    #     for model_name in model_names:
-    #         futures.append(executor.submit(_decide_sr_algo, model_name, input_img))
-
-    # return [f.result() for f in futures]
-    # return Parallel(n_jobs=2, prefer="threads")(
-    #     delayed(_decide_sr_algo)(model_name, input_img)
-    #     for model_name in model_names
-    # )
     return _decide_sr_algo(model_name, input_img)
 
+
 def _gradio_handler(sr_option: str, input_img: NDArray):
+    if sr_option not in SR_OPTIONS:
+        sr_option = "LambdaSwinIR_v0.1"
     return _super_resolve(sr_option, input_img)
 
 
+def gradio_auth(username: str, password: str) -> bool:
+    if username == "deepvoodoo":
+        if password == "super_resolution":
+            return True
+    return False
+
+
+def _clear_on_click(input_img, output_img):
+    input_img = None
+    output_img = None
+
+
+def _clear_viewer(viewer_image: NDArray):
+    viewer_image = None
+
+
+def _save_on_click(name: str, output_img: NDArray):
+    Image.fromarray(output_img).save(os.path.expanduser("~") + "/Desktop/" + name + ".png")
+
+
 gr.close_all()
-SR_OPTIONS = ["LambdaSwinIR_v0.1", "SwinIR-L_x4"]
+SR_OPTIONS = ["LambdaSwinIR_v0.1", "SwinIR-L_x4", "Naive upsample"]
 EXAMPLES_DIR = Path("examples")
+
+example_files = EXAMPLES_DIR.glob('**/*')
+examples_sorted = []
+for example_file in example_files:
+    examples_sorted.append(str(Path(example_file)))
+examples_sorted.sort()
 
 examples = []
 for option in SR_OPTIONS:
-    example_files = EXAMPLES_DIR.glob('**/*')
-    for example_file in example_files:
-        examples.append([option, str(Path(example_file))])
+    for example in examples_sorted:
+        examples.append([option, example])
 
-# examples = [
-#     ["LambdaSwinIR_v0.1", "examples/oldphoto6.png"],
-#     ["LambdaSwinIR_v0.1", "examples/Lincoln.png"],
-#     ["LambdaSwinIR_v0.1", "examples/00000067_cropped.png"],
-#     ["SwinIR-L_x4", "examples/oldphoto6.png"],
-#     ["SwinIR-L_x4", "examples/Lincoln.png"],
-#     ["SwinIR-L_x4", "examples/00000067_cropped.png"],
-# ]
-ui = gr.Interface(fn=_gradio_handler,
-                  inputs=[
-                      gr.Radio(SR_OPTIONS),
-                      gr.Image(image_mode="RGB")
-                  ],
-                  outputs=["image"],
-                  live=False,
-                  examples=examples,
-                  cache_examples=True)
-ui.launch(enable_queue=True, share=True)
+global_sr_option: str = None
+
+with gr.Blocks() as ui:
+    with gr.Tab("Super Res"):
+        with gr.Row():
+            with gr.Column():
+                sr_option = gr.Radio(SR_OPTIONS, value="LambdaSwinIR_v0.1",
+                                     label="Select super res algo", interactive=True),
+                global_sr_option = sr_option[0].cleared_value
+
+                warning = gr.Markdown(value=f"##### NOTE: images larger than {SIZE_LIMIT}x{SIZE_LIMIT} will be downsampled.")
+                input_img = gr.Image(
+                    image_mode="RGB",
+                    label="Input image")
+
+            with gr.Column():
+                output_img = gr.Image(image_mode="RGB", label="Output", interactive=False)
+
+        with gr.Row():
+            submit_button = gr.Button("Submit")
+            submit_button.click(_gradio_handler,
+                                inputs=[sr_option[0], input_img],
+                                outputs=[output_img])
+
+    # TODO: This could be useful later.
+    # with gr.Tab("Viewer"):
+    #     viewer_images = gr.Files(label="Images to view", interactive=True)
+    #     # viewer = gr.Gallery(value=viewer_images, label="Gallery")
+    examples = gr.Examples(examples=examples, inputs=[sr_option[0], input_img],
+                           outputs=output_img, fn=_gradio_handler, cache_examples=True)
+
+ui.launch(share=True)  # , auth=gradio_auth)
