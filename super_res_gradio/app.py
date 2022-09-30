@@ -8,7 +8,6 @@ from typing import Any, Dict
 
 import cv2
 import gradio as gr
-from joblib import Parallel, delayed
 from numpy.typing import NDArray
 from PIL import Image
 
@@ -24,8 +23,10 @@ def _run_in_subprocess(command: str, wd: str) -> Any:
 SWIN_IR_WD = "KAIR"
 SWINIR_CKPT_DIR: str = Path("KAIR/model_zoo/")
 MODEL_NAME_TO_PATH: Dict[str, Path] = {
-    "LambdaSwinIR_v0.1": Path(str(SWINIR_CKPT_DIR) + "/805000_G.pth"),
-    "SwinIR-L_x4": Path(str(SWINIR_CKPT_DIR) + "/003_realSR_BSRGAN_DFOWMFC_s64w8_SwinIR-L_x4_GAN.pth"),
+    "LambdaSwinIR_v0.1": Path(
+        str(SWINIR_CKPT_DIR) + "/805000_G.pth"),
+    "SwinIR-L_x4": Path(
+        str(SWINIR_CKPT_DIR) + "/003_realSR_BSRGAN_DFOWMFC_s64w8_SwinIR-L_x4_GAN.pth"),
 }
 SWINIR_NAME_TO_PATCH_SIZE: Dict[str, int] = {
     "LambdaSwinIR_v0.1": 96,
@@ -40,19 +41,24 @@ SWINIR_NAME_TO_LARGE_MODEL: Dict[str, bool] = {
     "SwinIR-L_x4": True,
 }
 
+
+def _get_random_id():
+    m = hashlib.sha256()
+    now_time = datetime.datetime.utcnow()
+    m.update(bytes(now_time.strftime("%Y-%m-%d %H:%M:%S.%f"), encoding='utf-8'))
+    return m.hexdigest()[0:20]
+
+
 def _run_swin_ir(
     image: NDArray,
     model_path: Path,
     patch_size: int,
     scale: int,
     is_large_model: bool,
+    model_name: str
 ):
     print("model_path: ", str(model_path))
-    m = hashlib.sha256()
-    now_time = datetime.datetime.utcnow()
-    m.update(bytes(str(model_path), encoding='utf-8') +
-             bytes(now_time.strftime("%Y-%m-%d %H:%M:%S.%f"), encoding='utf-8'))
-    random_id = m.hexdigest()[0:20]
+    random_id = _get_random_id()
 
     cwd = os.getcwd()
 
@@ -76,10 +82,11 @@ def _run_swin_ir(
     output_root = Path("./sr_interactive_tmp_output")
     output_root.mkdir(parents=True, exist_ok=True)
 
-    output_img.save(str(output_root) + "/SwinIR_" + random_id + ".png")
-    print("SAVING: SwinIR_" + random_id + ".png")
+    filename = f"{model_name}_" + random_id + ".png"
+    output_img.save(str(output_root) + "/" + filename)
+    print(f"SAVING: {filename}")
     result = np.array(output_img)
-    return result
+    return result, filename
 
 
 def _lanczos_upsample(image: NDArray):
@@ -88,9 +95,13 @@ def _lanczos_upsample(image: NDArray):
         dsize=(image.shape[1] * 2, image.shape[0] * 2),
         interpolation=cv2.INTER_LINEAR
     )
-    return result
+    random_id = _get_random_id()
+    filename = f"bilinear_{random_id}.png"
+    return result, filename
+
 
 SIZE_LIMIT = 1024
+
 
 def _downsize_if_necessary(image: NDArray):
     h, w, c = image.shape
@@ -112,30 +123,16 @@ def _downsize_if_necessary(image: NDArray):
     return result
 
 
-
 def _decide_sr_algo(model_name: str, image: NDArray):
     image = _downsize_if_necessary(image)
     if model_name == "Naive upsample":
         return _lanczos_upsample(image)
-    # if "SwinIR" in model_name:
-    #     result = _run_swin_ir(image,
-    #                           model_path=MODEL_NAME_TO_PATH[model_name],
-    #                           patch_size=SWINIR_NAME_TO_PATCH_SIZE[model_name],
-    #                           scale=SWINIR_NAME_TO_SCALE[model_name],
-    #                           is_large_model=("SwinIR-L" in model_name))
-    # else:
-    #     result = _bilinear_upsample(image)
-
-    # elif algo == SR_OPTIONS[1]:
-    #     result = _run_maxine(image, mode="SR")
-    # elif algo == SR_OPTIONS[2]:
-    #     result = _run_maxine(image, mode="UPSCALE")
-    # return result
     result = _run_swin_ir(image,
                           model_path=MODEL_NAME_TO_PATH[model_name],
                           patch_size=SWINIR_NAME_TO_PATCH_SIZE[model_name],
                           scale=SWINIR_NAME_TO_SCALE[model_name],
-                          is_large_model=SWINIR_NAME_TO_LARGE_MODEL[model_name])
+                          is_large_model=SWINIR_NAME_TO_LARGE_MODEL[model_name],
+                          model_name=model_name)
     return result
 
 
@@ -149,24 +146,15 @@ def _gradio_handler(sr_option: str, input_img: NDArray):
     return _super_resolve(sr_option, input_img)
 
 
+def _generate_random_filename(sr_option: str):
+    return
+
+
 def gradio_auth(username: str, password: str) -> bool:
     if username == "deepvoodoo":
         if password == "super_resolution":
             return True
     return False
-
-
-def _clear_on_click(input_img, output_img):
-    input_img = None
-    output_img = None
-
-
-def _clear_viewer(viewer_image: NDArray):
-    viewer_image = None
-
-
-def _save_on_click(name: str, output_img: NDArray):
-    Image.fromarray(output_img).save(os.path.expanduser("~") + "/Desktop/" + name + ".png")
 
 
 gr.close_all()
@@ -184,7 +172,6 @@ for option in SR_OPTIONS:
     for example in examples_sorted:
         examples.append([option, example])
 
-global_sr_option: str = None
 
 with gr.Blocks() as ui:
     with gr.Tab("Super Res"):
@@ -192,21 +179,25 @@ with gr.Blocks() as ui:
             with gr.Column():
                 sr_option = gr.Radio(SR_OPTIONS, value="LambdaSwinIR_v0.1",
                                      label="Select super res algo", interactive=True),
-                global_sr_option = sr_option[0].cleared_value
 
-                warning = gr.Markdown(value=f"##### NOTE: images larger than {SIZE_LIMIT}x{SIZE_LIMIT} will be downsampled.")
+                warning = gr.Markdown(value="##### NOTE: images larger than " +
+                                      f"{SIZE_LIMIT}x{SIZE_LIMIT} will be downsampled.")
                 input_img = gr.Image(
                     image_mode="RGB",
-                    label="Input image")
+                    label="Input image"
+                )
 
             with gr.Column():
                 output_img = gr.Image(image_mode="RGB", label="Output", interactive=False)
 
         with gr.Row():
             submit_button = gr.Button("Submit")
+            filename_output = gr.Textbox(
+                label="Filename you can use to name your downloaded image:"
+            )
             submit_button.click(_gradio_handler,
                                 inputs=[sr_option[0], input_img],
-                                outputs=[output_img])
+                                outputs=[output_img, filename_output])
 
     # TODO: This could be useful later.
     # with gr.Tab("Viewer"):
@@ -215,4 +206,4 @@ with gr.Blocks() as ui:
     examples = gr.Examples(examples=examples, inputs=[sr_option[0], input_img],
                            outputs=output_img, fn=_gradio_handler, cache_examples=True)
 
-ui.launch(share=True)  # , auth=gradio_auth)
+ui.launch(share=True, auth=gradio_auth)
