@@ -22,7 +22,7 @@ If you just want to generate some Pokémon use [this notebook](https://github.co
 
 ## Hardware
 
-Running Stable Diffusion itself is not too demanding by today's standards, and fine tuning the model doesn't require anything like the hardware on which it was originally trained. For this example I'm using 2xA6000 GPUs on [Lambda GPU Cloud](https://lambdalabs.com/service/gpu-cloud) and run training for around 15,000 steps which takes about 6 hours to run, at a cost of about $10. Training should be able to run on a single or lower spec GPUs (as long as there is >16GB of VRAM), but you might need to adjust batch size and gradient accumulation steps to fit your GPU. For more details on how to adjust these parameters see the [fine-tuning notebook](pokemon_finetune.ipynb).
+Running Stable Diffusion itself is not too demanding by today's standards, and fine tuning the model doesn't require anything like the hardware on which it was originally trained. For this example I'm using 2xA6000 GPUs on [Lambda GPU Cloud](https://lambdalabs.com/service/gpu-cloud) and run training for around 15,000 steps which takes about 6 hours to run, at a cost of about $10. Training should be able to run on a single or lower spec GPUs (as long as there is >24GB of VRAM), but you might need to adjust batch size and gradient accumulation steps to fit your GPU. For more details on how to adjust these parameters see the [fine-tuning notebook](pokemon_finetune.ipynb).
 
 ## Data!
 
