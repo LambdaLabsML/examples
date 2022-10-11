@@ -167,7 +167,6 @@ def main():
                     print("-" * 75)
 
         ddp_model.train()
-        train_loader.sampler.set_epoch(epoch)
 
         if use_syn:
             start_epoch = time.time()
@@ -185,6 +184,7 @@ def main():
                 times.append(elapsed)
                 print('num_steps_per_gpu: {}, avg_step_time: {:.4f}'.format(count, elapsed / count))              
         else:
+            train_loader.sampler.set_epoch(epoch)
             start_epoch = time.time()
             count = 0
             for data in train_loader:
