@@ -58,21 +58,20 @@ def evaluate(model, device, test_loader):
 def main():
 
     num_epochs_default = 10000
-    batch_size_default = 256 # 1024
+    batch_size_default = 256
+    image_size_default = 224
     learning_rate_default = 0.1
     random_seed_default = 0
     model_dir_default = "saved_models"
     model_filename_default = "resnet_distributed.pth"
-    w = 32
-    h = 32
-    c = 3
-    num_steps_syn = 20
+    steps_syn_default = 20
 
     # Each process runs on 1 GPU device specified by the local_rank argument.
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--local_rank", type=int, help="Local rank. Necessary for using the torch.distributed.launch utility.")
     parser.add_argument("--num_epochs", type=int, help="Number of training epochs.", default=num_epochs_default)
     parser.add_argument("--batch_size", type=int, help="Training batch size for one process.", default=batch_size_default)
+    parser.add_argument("--image_size", type=int, help="Size of input image.", default=image_size_default)
     parser.add_argument("--learning_rate", type=float, help="Learning rate.", default=learning_rate_default)
     parser.add_argument("--random_seed", type=int, help="Random seed.", default=random_seed_default)
     parser.add_argument("--model_dir", type=str, help="Directory for saving models.", default=model_dir_default)
@@ -81,6 +80,7 @@ def main():
     parser.add_argument("--backend", type=str, help="Backend for distribted training.", default='nccl', choices=['nccl', 'gloo', 'mpi'])
     parser.add_argument("--arch", type=str, help="Model architecture.", default='resnet50', choices=['resnet50', 'resnet18', 'resnet101', 'resnet152'])
     parser.add_argument("--use_syn", action="store_true", help="Use synthetic data")
+    parser.add_argument("--steps_syn", type=int, help="Step per epoch for training with synthetic data", default=steps_syn_default)
     argv = parser.parse_args()
 
     local_rank = argv.local_rank
@@ -93,6 +93,10 @@ def main():
     resume = argv.resume
     backend = argv.backend
     use_syn = argv.use_syn
+    w = argv.image_size
+    h = argv.image_size
+    c = 3
+    steps_syn = argv.steps_syn
 
     # Create directories outside the PyTorch program
     # Do not create directory here because it is not multiprocess safe
@@ -170,7 +174,7 @@ def main():
 
         if use_syn:
             start_epoch = time.time()
-            for count in range(num_steps_syn):
+            for count in range(steps_syn):
                 optimizer.zero_grad()
                 outputs = ddp_model(inputs_syn)
                 loss = criterion(outputs, labels_syn)
