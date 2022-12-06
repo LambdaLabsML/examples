@@ -36,10 +36,10 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
 
-You need to log out and log back in to let `usermod` take effect. On Lambda Cloud this can be achieved by terminating the exiting ssh into the machine in a new session. 
+You need to ssh into the server with a new session to let `usermod` take effect.  
 
 
-Now you are ready to build the image for nerfstudio. These are the commands:
+Now you are ready to build the image for nerfstudio. Here are the commands:
 
 ```
 export username=YOUR_DOCKER_HUB_ACCOUNT_NAME
@@ -94,7 +94,7 @@ ns-process-data video \
 We set `num_frames_target` to `400` -- this is an approximated number of frames extracted from the video footage. We set `matching_method` to `sequential` so to avoid an exhaustive `colmap` feature matching process. These settings can be changed according to the scene's complexity, the time budget, and the computing budget. In particular, `sequential` matching is only recommended when input images are from video footage.
 
 
-### Step Three: Exposes Your Localhost To The World
+### Step Three: Expose Your Localhost To The World
 
 Before we launch a NeRF training job, we should use `localtunnel` to generate a public URL for interacting with nerfstudio remotely. There are many options for serving a self-hosted apps publically (e.g. ngrok or Cloudflare tunnel). We choose `localtunnel` since it does not require any registration or auth token. It is also the method used in this official nerfstudio [colab notebook](https://github.com/nerfstudio-project/nerfstudio/blob/main/colab/demo.ipynb)
 
