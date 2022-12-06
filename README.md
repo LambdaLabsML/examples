@@ -15,3 +15,4 @@ A repository of deep learning examples.
 - [GPTNeoX - Large Language Model Multi-Node Distributed Training](gpt-neox-training/)
 - [Experiment Tracking](experiment-tracking/)
 - [PyTorch DDP - Multi node training with PyTorch DDP, torch.distributed.launch, torchrun and mpirun](pytorch/distributed)
+- [nerfstudio on Lambda Cloud](nerfstudio/)
