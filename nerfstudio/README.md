@@ -14,7 +14,7 @@
 
 [Nerfstudio](https://docs.nerf.studio/en/latest/) is an excellent tool that enables people to create and view [NeRF](https://arxiv.org/abs/2003.08934) (Neural Radiance Fields) models. It contains several APIs that simplify [data preprocessing](https://docs.nerf.studio/en/latest/quickstart/custom_dataset.html) (e.g., running `colmap`) and [model training](https://docs.nerf.studio/en/latest/quickstart/first_nerf.html). It also comes with a web-based interactive [viewer](https://docs.nerf.studio/en/latest/quickstart/viewer_quickstart.html) that visualizes the input data and the output model.
 
-It is quite easy to get nerfstudio up and running -- as long as you have a machine with a decent GPU to under the desk. However, what if that is not the case and you have to run the job on a remote server? In particular, how do you monitor a remote NeRF job and share it with other people?
+It is quite easy to get nerfstudio up and running -- as long as you have a machine with a decent GPU to work with. However, what if that is not the case and you have to run the job on a remote server? In particular, how do you monitor a remote NeRF job and share it with other people?
 
 This tutorial describes the steps of setting up nerfstudio on a remote cloud instance and sharing your work as as a public app. For sharing the app, we will choose a method thats avoid SSH port forwarding -- this is helpful when sharing SSH credentials is not a viable option. 
 
