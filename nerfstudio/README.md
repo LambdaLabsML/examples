@@ -84,8 +84,8 @@ Here we use video input as an example. Assume the input video is located at `/wo
 
 ```
 ns-process-data video \
---data /workspace/<path-to-video.MP4> \
---output-dir /workspace/<input-processed-dir> \
+--data <path-to-video.MP4> \
+--output-dir <input-processed-dir> \
 --verbose \
 --num_frames_target 400 \
 --matching_method sequential
@@ -122,7 +122,7 @@ This is the command to run NeRF training:
 
 ```
 ns-train nerfacto \
---data /workspace/<input-processed-dir>
+--data <input-processed-dir>
 ```
 
 Once the training starts, you can use the following __public__ URL to view the result:
@@ -137,8 +137,8 @@ By default `ns-train` will train a model from scratch. If you want to start from
 
 ```
 ns-train nerfacto \
---data /workspace/<input-processed-dir> \
---trainer.load-dir /workspace/<path-to-model-dir> \
+--data <input-processed-dir> \
+--trainer.load-dir <path-to-model-dir> \
 --viewer.start-train False
 ```
 
@@ -172,7 +172,7 @@ lt --port 7007 &
 
 # Launch training job
 ns-train nerfacto \
---data /workspace/deyoung_frames
+--data deyoung_frames
 
 # View your job at https://viewer.nerf.studio/?websocket_url=wss://<app-name>
 ```
