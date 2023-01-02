@@ -214,7 +214,7 @@ virtualenv -p /usr/bin/python3.8 venv-gpt-neox && \
 echo -e ". venv-gpt-neox/bin/activate\n" >> ~/.bashrc && \
 . venv-gpt-neox/bin/activate && \
 pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116 && \
-git clone https://github.com/chuanli11/gpt-neox && cd gpt-neox && git checkout lambda && \
+git clone https://github.com/LambdaLabsML/gpt-neox && cd gpt-neox && git checkout lambda && \
 pip install -r requirements/requirements.txt && \
 python ./megatron/fused_kernels/setup.py install && \
 pip install -r requirements/requirements-flashattention.txt && \
