@@ -200,4 +200,68 @@ All being well you should see training commence and during the logs you will see
 
 
 
+## GPT-NeoX 20B
 
+We experimented training GPT-NeoX 20B model with the 800GB "Pile" dataset on Lambda on-demand instances. We follow the same practice as above to set up the [NFS](https://github.com/LambdaLabsML/examples/tree/main/gpt-neox-training#head-node-setup) and [ssh credentials](https://github.com/LambdaLabsML/examples/tree/main/gpt-neox-training#ssh-between-the-nodes). The following are the steps to get the envorinment and dataset ready for training the 20B model.
+
+### Environment
+
+You can use a virtual environment to manage the dependencies. And here is how to do it (on all nodes):
+
+```
+cd ~ && \
+virtualenv -p /usr/bin/python3.8 venv-gpt-neox && \
+echo -e ". venv-gpt-neox/bin/activate\n" >> ~/.bashrc && \
+. venv-gpt-neox/bin/activate && \
+pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116 && \
+git clone https://github.com/chuanli11/gpt-neox && cd gpt-neox && git checkout lambda && \
+pip install -r requirements/requirements.txt && \
+python ./megatron/fused_kernels/setup.py install && \
+pip install -r requirements/requirements-flashattention.txt && \
+pip install protobuf==3.20.1
+```
+
+### The Pile Dataset
+
+It took us 27 hours to get the dataset ready. The final data folder is 1.1TB (400GB downloaded files, and the rest is tokenized files). Most of the time is spent on tokenizing the text. Here is the command to get the data prepared
+
+```
+wget --cut-dirs=5 -nH -r --no-parent --reject "index.html*" https://the-eye.eu/public/AI/models/GPT-NeoX-20B/slim_weights/ -P 20B_checkpoints && \
+python prepare_data.py pile -d ./data -t HFTokenizer \
+--vocab-file ./20B_checkpoints/20B_tokenizer.json
+```
+
+You can use a subset of Pile for a quick try (takes 1/30 of the time and storage):
+
+```
+python prepare_data.py pile_00 -d ./data -t HFTokenizer \
+--vocab-file ./20B_checkpoints/20B_tokenizer.json
+```
+
+### Train 20B model
+
+The 20B model needs at least __three 8xA100 40GB__ instances to train. (You can run an inference with it on a single instance with 4x GPUs). The training command is:
+```
+NCCL_IB_DISABLE=1 NCCL_DEBUG=INFO python ./deepy.py train.py -d configs 20B_lambda.yml
+```
+
+* `NCCL_IB_DISABLE=1` forces NCCL to use ethernet for inter-node communication. This is __necessary for on-demand SXM4 instances__; otherwise, training will hang. The reason is that Infinibands are unavailable on Lambda's __on-demand__ instances, but NCCL keeps looking for them for inter-node communication because they are SXM4 instances. The specific NCCL debug info is:
+```
+Got completion with error 12, opcode 0, len 0, vendor err 129
+```
+
+* `20B_lambda.yml` is the same as the default `20B.yml` config, apart from setting pipe-parallel-size to 6, and model-parallel-size to 4; otherwise training will hit an out-of-memory error.
+
+* with 3 nodes, the training runs at `63.2 TFLOPS` per GPU,  `4.728 samples/sec` and uses `27GB VRAM` per GPU. 
+
+
+### Scalability Test
+We also benchmarked the scaling efficiency of a large GPT-NeoX model on Lambda “on-demand” instances. We use a model that has the same config as the `20B` model, but reduces its hidden size from `6144` to `4096`, so practically a `~13B` model that can be trained on a single `8xA100 40GB` instance. We set `pipe-parallel-size 4` and `model-parallel-size 2`.
+
+The table below has the performance metrics for `1x`, `2x`, and `3x` nodes. In summary, two nodes give `1.45x` higher throughput than a single node. Three nodes do not make things any faster due to communication bottleneck.
+
+| Num of 8xA100 40GB nodes  |  Throughput (samples/sec) | TFLOPs per GPU  |
+|---|---|---|
+| 3  | 9.02  | 59.8  |
+| 2 | 9.074  | 90.3  |
+| 1 | 6.381  | 127.2  |
