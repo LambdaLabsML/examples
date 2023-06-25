@@ -1,3 +1,7 @@
+"""
+Fine-Tune Falcon LLM models
+"""
+
 import argparse
 from datasets import load_dataset
 import torch
@@ -7,9 +11,6 @@ from transformers import TrainingArguments
 from trl import SFTTrainer
 from accelerate import Accelerator
 
-"""
-Fine-Tune Llama-7b on SE paired dataset
-"""
 
 def get_args():
     parser = argparse.ArgumentParser()
