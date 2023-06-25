@@ -9,18 +9,11 @@ from trl import SFTTrainer
 dataset_name = "timdettmers/openassistant-guanaco"
 dataset = load_dataset(dataset_name, split="train")
 
-# model_name = "ybelkada/falcon-7b-sharded-bf16"
-#model_name = "ybelkada/falcon-40b-guanaco-lora"
-
-model_name = "tiiuae/falcon-7b"
+model_name = "ybelkada/falcon-7b-sharded-bf16"
 # model_name = "tiiuae/falcon-40b"
-# model_name = "tiiuae/falcon-40b-instruct"
-
 
 bnb_config = BitsAndBytesConfig(
-    load_in_4bit=False,
-#    bnb_4bit_quant_type="nf4",
-#    bnb_4bit_compute_dtype=torch.float16,
+   load_in_4bit=False,
 )
 
 
@@ -59,11 +52,11 @@ output_dir = "./results"
 per_device_train_batch_size = 4
 gradient_accumulation_steps = 4
 optim = "paged_adamw_32bit"
-save_steps = 10
+save_steps = 100
 logging_steps = 10
 learning_rate = 2e-4
 max_grad_norm = 0.3
-max_steps = 500
+max_steps = 100
 warmup_ratio = 0.03
 lr_scheduler_type = "constant"
 
