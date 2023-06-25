@@ -10,8 +10,10 @@ dataset_name = "timdettmers/openassistant-guanaco"
 dataset = load_dataset(dataset_name, split="train")
 
 model_name = "ybelkada/falcon-7b-sharded-bf16"
+# model_name = "tiiuae/falcon-40b"
 
 bnb_config = BitsAndBytesConfig(
+   load_in_4bit=True,
    bnb_4bit_quant_type="nf4",
    bnb_4bit_compute_dtype=torch.float16,
 )
