@@ -3,7 +3,8 @@ import transformers
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
-model = "tiiuae/falcon-40b"
+model = "tiiuae/falcon-7b"
+# model = "tiiuae/falcon-40b"
 tokenizer = AutoTokenizer.from_pretrained(model)
 model = AutoModelForCausalLM.from_pretrained(model, trust_remote_code=True, torch_dtype=torch.bfloat16, device_map=0)
 pipeline = transformers.pipeline(

@@ -1,4 +1,4 @@
-# Benchmark Falcon LLM
+# Fine-tuning Falcon LLM 7B/40B
 
 ## Installation on Lambda Cloud
 
@@ -41,15 +41,40 @@ pip install scipy datasets bitsandbytes wandb
 ```
 eval "$(/home/ubuntu/miniconda3/bin/conda shell.bash hook)"
 conda activate falcon-env
-python ft.py
+
+# Single GPU, falcon 7B, 4bit quantization
+torchrun --nnodes 1 --nproc_per_node 1 \
+ft.py \
+-m ybelkada/falcon-7b-sharded-bf16 \
+-q 4bit
+
+# 8x GPUs, falcon 40B, 8bit quantization
+torchrun --nnodes 1 --nproc_per_node 8 \
+ft.py \
+-m tiiuae/falcon-40b \
+-q 8bit
 ```
 
 # Results
 
-TODO: table / graph for training throughput (`seq/sec`)
+## Falcon 7B
+
+| Config      | samples/sec 4bit | samples/sec 8bit |
+| ----------- | ----------- |----------- |
+| 1xA100 80GB SXM4   |   5.024  |1.923     |
+| 8xA100 80GB SXM4   |   39.535  |15.241    |
+
+## Falcon 40B
+
+| Config      | samples/sec 4bit | samples/sec 8bit |
+| ----------- | ----------- |----------- |
+| 1xA100 80GB SXM4   |  1.111     | 0.36 |
+| 8xA100 80GB SXM4   |   8.705    | 2.85 |
+
+
 
 # Credits
 
-The fine-tuning script is based on this [Colab notebook](https://colab.research.google.com/drive/1BiQiw31DT7-cDp1-0ySXvvhzqomTdI-o?usp=sharing) from Huggingface's blog: [The Falcon has landed in the Hugging Face ecosystem](https://huggingface.co/blog/falcon#fine-tuning-with-peft).
+The fine-tuning script is based on this [Colab notebook](https://colab.research.google.com/drive/1BiQiw31DT7-cDp1-0ySXvvhzqomTdI-o?usp=sharing) from Huggingface's blog: [The Falcon has landed in the Hugging Face ecosystem](https://huggingface.co/blog/falcon#fine-tuning-with-peft). We modified the original script so it is data parallelized for better scaling across multiple GPUs.
 
 The installation steps are based on naterw's [instructions](https://huggingface.co/tiiuae/falcon-40b/discussions/18#647939c2c68a021fbba88182).
