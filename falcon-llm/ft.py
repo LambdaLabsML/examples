@@ -49,11 +49,11 @@ output_dir = "./results"
 per_device_train_batch_size = 4
 gradient_accumulation_steps = 4
 optim = "paged_adamw_32bit"
-save_steps = 10
+save_steps = 100
 logging_steps = 10
 learning_rate = 2e-4
 max_grad_norm = 0.3
-max_steps = 500
+max_steps = 100
 warmup_ratio = 0.03
 lr_scheduler_type = "constant"
 
