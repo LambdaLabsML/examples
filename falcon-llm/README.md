@@ -1,5 +1,6 @@
 # Fine-tuning Falcon LLM 7B/40B
 
+
 Running SOTA LLMs on a single GPU with LoRA and quantization is super cool. But don't forget the good old data parallelism! 
 
 📢 Check out how to linearly scale Falcon 7B/40B fine-tuning across 8x A100 80GB GPUs on Lambda Cloud.
@@ -26,6 +27,12 @@ printf '\neval "$(/home/ubuntu/miniconda3/bin/conda shell.bash hook)"' >> ~/.bas
 
 **Setup env**
 
+Install using the yaml file:
+```
+conda env create -f falcon-env.yaml
+conda activate falcon-env
+```
+or manually:
 ```
 # Create and activate env. -y skips confirmation prompt.
 conda create -n falcon-env python=3.9 -y
@@ -63,10 +70,14 @@ ft.py \
 
 ## Falcon 7B
 
-| Config      | samples/sec 4bit | samples/sec 8bit |
-| ----------- | ----------- |----------- |
-| 1xA100 80GB SXM4   |   5.024  |1.923     |
-| 8xA100 80GB SXM4   |   39.535  |15.241    |
+| Config           | samples/sec 4bit | samples/sec 8bit |
+|------------------|------------------|------------------|
+| 1xA100 80GB SXM4 | 5.024            | 1.923            |
+| 8xA100 80GB SXM4 | 39.535           | 15.241           |
+| 1xA100 40GB SXM4 | 3.9              | 1.688            |
+| 1xA6000          | 1.895            | 1.513            |
+| 1xA10            | 1.45             | -                |
+
 
 ## Falcon 40B
 
@@ -74,7 +85,6 @@ ft.py \
 | ----------- | ----------- |----------- |
 | 1xA100 80GB SXM4   |  1.111     | 0.36 |
 | 8xA100 80GB SXM4   |   8.705    | 2.85 |
-
 
 
 # Credits
