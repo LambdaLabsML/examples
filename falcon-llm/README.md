@@ -1,5 +1,10 @@
 # Fine-tuning Falcon LLM 7B/40B
 
+
+Running SOTA LLMs on a single GPU with LoRA and quantization is super cool. But don't forget the good old data parallelism! 
+
+📢 Check out how to linearly scale Falcon 7B/40B fine-tuning across 8x A100 80GB GPUs on Lambda Cloud.
+ 
 ## Installation on Lambda Cloud
 
 From a clean [Lambda cloud instance](https://cloud.lambdalabs.com/):
@@ -72,6 +77,7 @@ ft.py \
 | 1xA100 40GB SXM4 | 3.9              | 1.688            |
 | 1xA6000          | 1.895            | 1.513            |
 | 1xA10            | 1.45             | -                |
+
 
 ## Falcon 40B
 
