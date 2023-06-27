@@ -1,0 +1,25 @@
+name: falcon-env
+channels:
+  - pytorch
+  - nvidia
+dependencies:
+  - python=3.9
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=11.8
+  - sentencepiece
+  - scipy
+  - datasets
+  - pip
+  - pip:
+    - accelerate
+    - einops
+    - sentencepiece
+    - git+https://github.com/huggingface/transformers.git
+    - trl
+    - git+https://github.com/huggingface/peft.git
+    - scipy
+    - datasets
+    - bitsandbytes
+    - wandb
