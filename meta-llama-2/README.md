@@ -10,7 +10,7 @@ Both meta and huggingface need to grant you access to download the models:
 
 ## Spin up a GPU machine (you can use an A10!)
 
-You can go to https://cloud.lambdalabs.com/instances and select whatever instance type you want to start fine tuning the llama models. For the 7b parameter variant, you can go as small as an A10 (25GB GPU ram).
+You can go to https://cloud.lambdalabs.com/instances and select whatever instance type you want to start fine tuning the llama models. For the 7b parameter variant, you can go as small as an A10 (24GB GPU ram).
 
 Assuming you've also set up an ssh key at https://cloud.lambdalabs.com/ssh-keys, once the machine starts up you can just copy/paste the ssh command associated with the machine and run that in a terminal:
 
