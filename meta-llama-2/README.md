@@ -30,7 +30,7 @@ Assuming you've also set up an ssh key at https://cloud.lambdalabs.com/ssh-keys,
 pip install transformers peft trl bitsandbytes
 ```
 
-2. Download `trl` repo for the training script (https://github.com/lvwerra/trl/blob/main/examples/scripts/sft_trainer.py)
+2. Clone the `trl` repo for the training script (https://github.com/lvwerra/trl/blob/main/examples/scripts/sft_trainer.py)
 
 ```bash
 git clone https://github.com/lvwerra/trl
@@ -50,10 +50,10 @@ Copy the auth token you created earlier (from https://huggingface.co/settings/to
 python trl/examples/scripts/sft_trainer.py \
     --model_name meta-llama/Llama-2-7b-hf \
     --dataset_name timdettmers/openassistant-guanaco \
-    --load_in_4bit \
+    --load_in_8bit \
     --use_peft \
-    --batch_size 4 \
-    --gradient_accumulation_steps 2
+    --batch_size 8 \
+    --gradient_accumulation_steps 1
 ```
 
 This will download the model weights automatically, so the first time you run, it will take a bit to actually start training.
@@ -75,10 +75,13 @@ You should end up seeing output like this:
 
 ## Summary
 
-We've shown how easy it is to spin up a low cost ($0.60 per hour) GPU machine to fine tune the Llama 2 7b models. Spinning up the machine and setting up the environment takes only a few minutes, and the downloading model weights takes ~1 minute at the beginning of training. This means you start fine tuning within 5 minutes using really simple commands!
+We've shown how easy it is to spin up a low cost ($0.60 per hour) GPU machine to fine tune the Llama 2 7b models. Spinning up the machine and setting up the environment takes only a few minutes, and the downloading model weights takes ~2 minutes at the beginning of training. This means you start fine tuning within 5 minutes using really simple commands!
 
-If you request a larger GPU like an A100, you can up the batch size you use in the training command, which will increase the samples/sec. Here are some benchmarks on different GPUs:
+If you request a larger GPU like an A100, you can up the batch size you use in the training command, which will increase the samples/sec. Here are some simple benchmarks on different GPUs and batch sizes:
 
-| Model / GPU | 4bit samples/sec 4bit | 8bit samples/sec |
-| --- | --- | --- | --- |
-| 7b / 1xA10 | 0.33 | 0.5 |
+| Model | GPU    | Batch Size | 4bit samples/sec[1] | 8bit samples/sec[1] |
+| ----- | ------ | ---------- | ------------------- | ------------------- |
+| 7b    | 1xA10  | 8          | 0.13                | 0.5                 |
+| 7b    | 1xA100 | 32         | 0.4                 | 0.7                 |
+
+[1] Here samples/sec is calculated by multiplying batch size by the inverse of `s/iter` that the sft_trainer script reports. All training runs had gradient accumulation steps equal to 1.
