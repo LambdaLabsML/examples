@@ -31,7 +31,7 @@ printf '\neval "$(/home/ubuntu/miniconda3/bin/conda shell.bash hook)"' >> ~/.bas
 Install using the yaml file:
 
 ```
-conda env create -f falcon-env.yaml
+conda env create -f falcon-env.yml
 conda activate falcon-env
 ```
 
