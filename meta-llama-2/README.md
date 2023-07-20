@@ -1,4 +1,10 @@
-# Fine tuning Meta's LLaMA 2 on Lambda GPU Cloud
+# Fine tuning Meta's Llama 2 on Lambda GPU Cloud
+
+Meta [recently released](https://ai.meta.com/llama/) the next generation of the llama models (Llama 2), trained on 40% more data! Given the explosive popularity of open source large language models (LLMs) like llama, which spawned popular models like vicuna and falcon, new versions of these models are very exciting.
+
+Along with the development of these models, the open source community has released a ton of utilities for fine tuning and deploying language models. Libraries like [peft](https://github.com/huggingface/peft), [bitsandbytes](https://github.com/TimDettmers/bitsandbytes), and [trl](https://github.com/lvwerra/trl/tree/main) make it possible to fine tune LLMs on machines that can't hold the full precision model in GPU ram.
+
+This blog post provides instructions on how to fine tune Llama 2 models on Lambda Cloud. The same instructions can be applied to multi-GPU Linux workstations or servers, assuming they have the latest NVIDIA driver installed (which can be done using Lambda Stack).
 
 ## Getting access to the models
 
@@ -66,3 +72,13 @@ You should end up seeing output like this:
 {'loss': 1.3352, 'learning_rate': 1.4069455727051177e-05, 'epoch': 0.01}
 ...
 ```
+
+## Summary
+
+We've shown how easy it is to spin up a low cost (60 cents per hour) GPU machine to fine tune the Llama 2 7b models. Spinning up the machine and setting up the environment takes only a few minutes, and the downloading model weights takes ~1 minute at the beginning of training. This means you can be fine tuning within 5 minutes with some really simple commands!
+
+If you request a larger GPU like an A100, you can up the batch size you use in the training command, which will increase the samples/sec. Here are some benchmarks on different GPUs:
+
+| GPU | samples/sec 4bit | samples/sec 8bit |
+| --- | --- | --- |
+| 1xA10 | 0.33 | 0.5 |
