@@ -1,8 +1,14 @@
 # Flash-Attention 2 on Lambda Cloud
 
+FlashAttention, the game-changing algorithm designed to accelerate attention modules and minimize memory usage without any approximation, took the world by storm after its release in 2022. It quickly found its way into machine learning [frameworks](https://github.com/Dao-AILab/flash-attention/blob/main/usage.md#integrated-into-machine-learning-frameworks) and became a staple in industry-standard [benchmarks](https://spectrum.ieee.org/mlperf-rankings-2022), leaving a trail of awe-inspiring results in its wake.
+
+Now, brace yourself for the next level of innovation as FlashAttention 2 has been released! Building upon its predecessor's success, FlashAttention 2 delivers an astounding 2× speedup, achieved through improved parallelism and work partitioning. In this blog post, we'll show you how to use FlashAttention 2 on Lambda Cloud and share benchmark results for training GPT3-style models using A100 and H100 GPUs. Let's dive in!
+
 ![record](imgs/record.gif)
 
 ## Installation
+
+The authors of FlasAttention have provided a [Dockerfile](https://github.com/Dao-AILab/flash-attention/blob/main/training/Dockerfile) that contains the latest FlashAttention. Our fork of the repo contains configuration to train GPT3-style models with the OpenWebText dataset.
 
 ```
 git clone https://github.com/LambdaLabsML/flash-attention.git && \
@@ -23,9 +29,8 @@ flash-attention:latest \
 sh -c 'cd  /workspace/training && export PYTHONPATH=$PWD:$PYTHONPATH && pytest -q -s tests/datamodules/test_language_modeling_hf.py -k "openwebtext"'
 
 
-
 # Train GPT-3
-# Change trainer.devices accordingly to match the number of GPUs on your instance
+# Change trainer.devices so it matches the number of GPUs on your machine
 
 docker run --gpus all --shm-size=1024g \
 -v ${PWD}:/workspace \
