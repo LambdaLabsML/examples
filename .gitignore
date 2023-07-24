@@ -17,3 +17,6 @@ __pycache__
 
 # Misc.
 *.so
+
+# venv
+*.venv*
