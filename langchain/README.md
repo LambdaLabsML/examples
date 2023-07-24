@@ -7,9 +7,7 @@ Create a virtual environment and select the kernel `openai-func` from the Jupyte
 ```
 # Create the virtual environment
 git clone https://github.com/LambdaLabsML/examples.git && \
-cd examples && \
-git checkout langchain && \
-cd langchain && \
+cd examples/langchain && \
 python -m venv .venv && \
 . .venv/bin/activate && \
 python -m pip install pip --upgrade --force && \
