@@ -40,7 +40,7 @@ sh -c 'cd  /workspace/training && export PYTHONPATH=$PWD:$PYTHONPATH && python r
 
 ## Results
 
-Here is the training speed of the `gpt3-2.7B-flash` model with FlashAttention 2. Overall H100 80GB SXM5 produces more than 2x tokens/sec compared to A100 80GB SXM4. And cards scale well from 1x to 8x GPUs.
+Here is the training speed of the `gpt3-2.7B-flash` model with FlashAttention 2. Overall H100 80GB SXM5 produces more than 2x tokens/sec compared to A100 80GB SXM4. And both cards scale well from 1x to 8x GPUs.
 
 | Configurations   | Iter/Sec | Tokens/Sec | BS_per_GPU | Memory_per_GPU (GB) | Time to 300B Tokens GPT3-2.7B (Days) | Extrapolated Time to 300B Tokens GPT3-175B (Days) |
 | ---------------- | -------- | ---------- | ---------- | ------------------- | ------------------------------------ | ------------------------------------------------- |
