@@ -8,7 +8,7 @@ Now, brace yourself for the next level of innovation as FlashAttention 2 has bee
 
 ## Installation
 
-The authors of FlasAttention have provided a [Dockerfile](https://github.com/Dao-AILab/flash-attention/blob/main/training/Dockerfile) that contains the latest FlashAttention 2. Our fork of the repo contains configuration to train GPT3-style models with the OpenWebText dataset.
+The authors of FlashAttention have provided a [Dockerfile](https://github.com/Dao-AILab/flash-attention/blob/main/training/Dockerfile) that contains the latest FlashAttention 2. Our fork of the repo contains configuration to train GPT3-style models with the OpenWebText dataset.
 
 ```
 git clone https://github.com/LambdaLabsML/flash-attention.git && \
