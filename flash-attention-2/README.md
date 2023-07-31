@@ -53,8 +53,8 @@ Let's begin by comparing the training speed of the [baseline](https://github.com
 | ----------------------- | -------- | ---------- | ---------- | ------------------- | ------------------------------------ | ------------------------------------------------- |
 | A100 80GB SXM4 Baseline | 3.63     | 3717.1     | 1          | 73                  | 934                                  | 60544                                             |
 | A100 80GB SXM4 FA2      | 2.6      | 10649.6    | 4          | 73                  | 326                                  | 21132                                             |
-| H100 80GB SXM5 Baseline | 6.12     | 6266.88    | 1          | 73                  | 156                                  | 10100                                             |
-| H100 80GB SXM5 FA2      | 5.44     | 22282.24   | 4          | 73                  | 555                                  | 35911                                             |
+| H100 80GB SXM5 Baseline | 6.12     | 6266.88    | 1          | 73                  | 555                                  | 35911                                             |
+| H100 80GB SXM5 FA2      | 5.44     | 22282.24   | 4          | 73                  | 156                                  | 10100                                             |
 
 It is nice to see that H100 80GB SXM5 produces more than 2x `Tokens/Sec` compared to A100 80GB SXM4 (`22282.24` v.s. `10649.6`), and both GPUs scaled very well from 1x to 8x GPUs (96% and 98% for A100 and H100 respectively, as shown in the table below).
 
