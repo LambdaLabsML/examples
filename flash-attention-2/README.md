@@ -7,7 +7,7 @@ Now, brace yourself for the next level of innovation as FlashAttention 2 has bee
 - FlashAttention 2 achieved 3x or higher speedups over the baseline Huggingface implementation.
 - H100 80GB SXM5 is 2x faster than A100 80GB SXM4 when running FlashAttention 2.
 
-To give you a taste of its real-world impact, FlashAttention 2 enables replicating `GPT3-175B` training with just 242,400 GPU hours (H100 80GB SXM5). On [Lambda Cloud](<(https://lambdalabs.com/service/gpu-cloud/reserved)>), this translates to $1,175,640 using the Sprint cluster ($4.85/H100/Hour) or $458,136 using the three-year reserved cluster ($1.89/H100/Hour). This represents a remarkable 75% or 90% reduction compared to our [ealier blog's](https://lambdalabs.com/blog/demystifying-gpt-3) estimated cost of $4,600,000.
+To give you a taste of its real-world impact, FlashAttention 2 enables replicating `GPT3-175B` training with "just" 242,400 GPU hours (H100 80GB SXM5). On [Lambda Cloud](<(https://lambdalabs.com/service/gpu-cloud/reserved)>), this translates to $1,175,640 using the Sprint cluster ($4.85/H100/Hour) or $458,136 using the three-year reserved cluster ($1.89/H100/Hour). This represents a remarkable 75% or 90% cost reduction compared to our [earlier blog's](https://lambdalabs.com/blog/demystifying-gpt-3) $4,600,000 estimation.
 
 Without further ado, let's dive into the details of the benchmark and results.
 
@@ -47,7 +47,7 @@ There are multiple configurations in the [experiment](https://github.com/LambdaL
 
 ## Results
 
-First, let's compare `GPT3-2.7B` training speed between the [baseline](https://github.com/LambdaLabsML/flash-attention/blob/main/training/configs/experiment/owt/gpt3-2.7B-hf.yaml) implementation and the [FlashAttention 2](https://github.com/LambdaLabsML/flash-attention/blob/main/training/configs/experiment/owt/gpt3-2.7B-flash.yaml) implementation. The table below shows the FlashAttention 2 implementation didn't only achieve 3x or higher `Tokens/Sec`, but also enabled a much larger batch size.
+Let's begin by comparing the training speed of the [baseline](https://github.com/LambdaLabsML/flash-attention/blob/main/training/configs/experiment/owt/gpt3-2.7B-hf.yaml) implementation and the [FlashAttention 2](https://github.com/LambdaLabsML/flash-attention/blob/main/training/configs/experiment/owt/gpt3-2.7B-flash.yaml) implementation. The table below shows the FlashAttention 2 implementation achieved `3x` or higher `Tokens/Sec`, which is calculated as `Iter/Sec` x `max_length` x `batch_size`. Additionally, FlashAttention 2 optimizes memory usage, enabling an increase in affordable `batch_size` from `1` to `4`. In our benchmark, we set `headdim` to `80` for the FlashAttention 2 implementation. While setting `headdim` to `128` ([calculated](https://github.com/LambdaLabsML/flash-attention/blob/main/training/configs/experiment/owt/gpt3-2.7B-flash-hdim128.yaml#L8-L9) as `n_embd` divided by `n_head`) may yield slightly improved performance, the exact difference varies depending on the model.
 
 | Configurations          | Iter/Sec | Tokens/Sec | BS_per_GPU | Memory_per_GPU (GB) | Time to 300B Tokens GPT3-2.7B (Days) | Extrapolated Time to 300B Tokens GPT3-175B (Days) |
 | ----------------------- | -------- | ---------- | ---------- | ------------------- | ------------------------------------ | ------------------------------------------------- |
@@ -65,4 +65,8 @@ It is nice to see that H100 80GB SXM5 produces more than 2x `Tokens/Sec` compare
 | 8xA100 80GB SXM4 FA2 | 2.5      | 81920      | 4          | 56                  | 42                                   | 2747                                              |
 | 8xH100 80GB SXM5 FA2 | 5.34     | 174981.12  | 4          | 56                  | 20                                   | 1286                                              |
 
-Last but not least, we estimated the time to solution (process 300 Billion tokens) for `GPT3-175B` model by linearly scaling the time to solution of the GPT3 2.7B model by 65 folds (`175/2.7`). The result suggests that with FlashAttention 2 one can expect to reproduce `GPT3-175B` training in just about 10 days with 1024 H100 80GB SXM5 GPUs. On [Lambda Cloud](<(https://lambdalabs.com/service/gpu-cloud/reserved)>), this translates to $1,175,640 using the Sprint cluster ($4.85/H100/Hour) or $458,136 using the three-year reserved cluster ($1.89/H100/Hour). This represents a remarkable 75% or 90% reduction compared to our [ealier blog's](https://lambdalabs.com/blog/demystifying-gpt-3) estimated cost of $4,600,000.
+Last but not least, we estimated the time to solution (process 300 Billion tokens) for `GPT3-175B` model by linearly scaling the time to solution of the GPT3 2.7B model by 65 folds (`175/2.7`). The result suggests that with FlashAttention 2 one can expect to reproduce `GPT3-175B` training in just about 10 days with 1024 H100 80GB SXM5 GPUs. On [Lambda Cloud](<(https://lambdalabs.com/service/gpu-cloud/reserved)>), this translates to $1,175,640 using the Sprint cluster ($4.85/H100/Hour) or $458,136 using the three-year reserved cluster ($1.89/H100/Hour). This represents a remarkable 75% or 90% reduction compared to our [earlier blog's](https://lambdalabs.com/blog/demystifying-gpt-3) estimated cost of $4,600,000.
+
+# Acknowledgement
+
+We thank Tri Dao (the first author of [FlashAttention](https://github.com/Dao-AILab/flash-attention)) for valuable feedback on our benchmark results.
