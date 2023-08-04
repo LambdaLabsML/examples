@@ -1,4 +1,4 @@
-# FlashAttention 2 on Lambda Cloud
+# FlashAttention 2 on Lambda Cloud A100 v.s. H100
 
 FlashAttention, the game-changing algorithm designed to accelerate attention modules and minimize memory usage without any approximation, took the world by storm after its release in 2022. It quickly found its way into machine learning [frameworks](https://github.com/Dao-AILab/flash-attention/blob/main/usage.md#integrated-into-machine-learning-frameworks) and became a staple in industry-standard [benchmarks](https://spectrum.ieee.org/mlperf-rankings-2022), leaving a trail of awe-inspiring results in its wake.
 
