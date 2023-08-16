@@ -7,6 +7,12 @@ Now, brace yourself for the next level of innovation as FlashAttention 2 has bee
 - FlashAttention 2 achieved 3x or higher speedups over the baseline Huggingface implementation.
 - H100 80GB SXM5 is 2x faster than A100 80GB SXM4 when running FlashAttention 2.
 
+Here is a chat that shows the speedup you can get from FlashAttention 2 using different GPUs (A100 and H100):
+
+<div align="center">
+<img src="imgs/Speedup.png" width="600" />
+</div>
+
 To give you a taste of its real-world impact, FlashAttention 2 enables replicating `GPT3-175B` training with "just" 242,400 GPU hours (H100 80GB SXM5). On [Lambda Cloud](<(https://lambdalabs.com/service/gpu-cloud/reserved)>), this translates to $458,136 using the three-year reserved cluster ($1.89/H100/Hour). This represents a remarkable 90% cost reduction compared to our [earlier blog's](https://lambdalabs.com/blog/demystifying-gpt-3) $4,600,000 estimation.
 
 Without further ado, let's dive into the details of the benchmark and results.
